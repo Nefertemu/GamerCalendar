@@ -9,8 +9,6 @@ class TableViewController: UITableViewController {
 
         let cellTypeNib = UINib(nibName: "GameCell", bundle: nil)
         tableView.register(cellTypeNib, forCellReuseIdentifier: "GameCell")
-        
-        print("Hello")
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
