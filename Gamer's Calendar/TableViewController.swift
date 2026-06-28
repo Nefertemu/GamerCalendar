@@ -2,13 +2,30 @@
 import UIKit
 
 class TableViewController: UITableViewController {
+    
+    private var games: [GamesStorage] = []
+    private let rawgService = RawgService()
         
     override func viewDidLoad() {
         super.viewDidLoad()
-        games.sort { $0.releaseDate < $1.releaseDate }
+
+        tableView.rowHeight = 112
 
         let cellTypeNib = UINib(nibName: "GameCell", bundle: nil)
         tableView.register(cellTypeNib, forCellReuseIdentifier: "GameCell")
+        
+        Task {
+            do {
+                games = try await rawgService.fetchGames()
+                games.sort { ($0.releaseDate ?? .distantFuture) < ($1.releaseDate ?? .distantFuture) }
+
+                await MainActor.run {
+                    tableView.reloadData()
+                }
+            } catch {
+                print("RAWG loading error:", error)
+            }
+        }
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -18,10 +35,29 @@ class TableViewController: UITableViewController {
         let gameImage = cell.viewWithTag(3) as? UIImageView
         let gamePlatform = cell.viewWithTag(4) as? UILabel
         let game = games[indexPath.row]
+
         gameTitle?.text = game.gameTitle
-        gamePlatform?.text = game.platforms
-        gameDate?.text = game.releaseDate.formatted(date: .numeric, time: .omitted)
-        gameImage?.image = game.image
+        gamePlatform?.text = game.platforms.isEmpty ? "Unknown platform" : game.platforms
+        gameDate?.text = game.releaseDate?.formatted(date: .numeric, time: .omitted) ?? "Unknown date"
+        gameImage?.contentMode = .scaleAspectFill
+        gameImage?.clipsToBounds = true
+        gameImage?.image = UIImage(systemName: "photo")
+
+        if let imageURL = game.imageURL {
+            Task {
+                guard let (data, _) = try? await URLSession.shared.data(from: imageURL),
+                      let image = UIImage(data: data) else {
+                    return
+                }
+
+                await MainActor.run {
+                    let currentCell = tableView.cellForRow(at: indexPath)
+                    let currentImageView = currentCell?.viewWithTag(3) as? UIImageView
+                    currentImageView?.image = image
+                }
+            }
+        }
+
         return cell
     }
     
@@ -55,7 +91,7 @@ class TableViewController: UITableViewController {
     /*
      // Override to support conditional editing of the table view.
      override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-     // Return false if you do not want the specified item to be editable.
+     // Return false if you do not want the item to be editable.
      return true
      }
      */
@@ -73,7 +109,7 @@ class TableViewController: UITableViewController {
      */
     
     /*
-     // Override to support rearranging the table view.
+     // Override to support rearranging of the table view.
      override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
      
      }
