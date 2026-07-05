@@ -16,6 +16,8 @@
 		2234B4DF2822C46900B8CCB0 /* Games.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2234B4DE2822C46900B8CCB0 /* Games.swift */; };
 		2234B4E52822C91A00B8CCB0 /* GameCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2234B4E32822C91A00B8CCB0 /* GameCell.swift */; };
 		2234B4E62822C91A00B8CCB0 /* GameCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2234B4E42822C91A00B8CCB0 /* GameCell.xib */; };
+		4393834C2FFAE21E003ACC20 /* GameDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4393834B2FFAE21E003ACC20 /* GameDetailViewController.swift */; };
+		4393834E2FFAE2E2003ACC20 /* ScreenshotViewerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4393834D2FFAE2E2003ACC20 /* ScreenshotViewerController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,6 +51,8 @@
 		2234B4DE2822C46900B8CCB0 /* Games.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Games.swift; sourceTree = "<group>"; };
 		2234B4E32822C91A00B8CCB0 /* GameCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCell.swift; sourceTree = "<group>"; };
 		2234B4E42822C91A00B8CCB0 /* GameCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = GameCell.xib; sourceTree = "<group>"; };
+		4393834B2FFAE21E003ACC20 /* GameDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameDetailViewController.swift; sourceTree = "<group>"; };
+		4393834D2FFAE2E2003ACC20 /* ScreenshotViewerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotViewerController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -106,6 +110,8 @@
 				2234B4B42822BF0400B8CCB0 /* Assets.xcassets */,
 				2234B4B62822BF0400B8CCB0 /* LaunchScreen.storyboard */,
 				2234B4B92822BF0400B8CCB0 /* Info.plist */,
+				4393834B2FFAE21E003ACC20 /* GameDetailViewController.swift */,
+				4393834D2FFAE2E2003ACC20 /* ScreenshotViewerController.swift */,
 			);
 			path = "Gamer's Calendar";
 			sourceTree = "<group>";
@@ -191,7 +197,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1330;
-				LastUpgradeCheck = 1330;
+				LastUpgradeCheck = 2660;
 				TargetAttributes = {
 					2234B4A72822BF0100B8CCB0 = {
 						CreatedOnToolsVersion = 13.3.1;
@@ -260,8 +266,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				2234B4E52822C91A00B8CCB0 /* GameCell.swift in Sources */,
+				4393834C2FFAE21E003ACC20 /* GameDetailViewController.swift in Sources */,
 				2234B4AC2822BF0100B8CCB0 /* AppDelegate.swift in Sources */,
 				2234B4DC2822C38200B8CCB0 /* TableViewController.swift in Sources */,
+				4393834E2FFAE2E2003ACC20 /* ScreenshotViewerController.swift in Sources */,
 				2234B4AE2822BF0100B8CCB0 /* SceneDelegate.swift in Sources */,
 				2234B4DF2822C46900B8CCB0 /* Games.swift in Sources */,
 			);
@@ -320,6 +328,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
@@ -350,8 +359,10 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = Q95U4J4JFY;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -371,6 +382,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -380,6 +392,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
@@ -410,8 +423,10 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = Q95U4J4JFY;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -424,6 +439,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				VALIDATE_PRODUCT = YES;
@@ -437,7 +453,6 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = Q95U4J4JFY;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Gamer's Calendar/Info.plist";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -468,7 +483,6 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = Q95U4J4JFY;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Gamer's Calendar/Info.plist";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -495,11 +509,9 @@
 		2234B4D62822BF0400B8CCB0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = Q95U4J4JFY;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
 				MARKETING_VERSION = 1.0;
@@ -515,11 +527,9 @@
 		2234B4D72822BF0400B8CCB0 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = Q95U4J4JFY;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
 				MARKETING_VERSION = 1.0;
@@ -535,10 +545,8 @@
 		2234B4D92822BF0400B8CCB0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = Q95U4J4JFY;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.bogdan.Gamer-s-CalendarUITests";
@@ -553,10 +561,8 @@
 		2234B4DA2822BF0400B8CCB0 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = Q95U4J4JFY;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.bogdan.Gamer-s-CalendarUITests";

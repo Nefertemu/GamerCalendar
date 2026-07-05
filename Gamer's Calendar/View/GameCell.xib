@@ -8,7 +8,7 @@
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
         <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
-        <tableViewCell contentMode="scaleToFill" selectionStyle="none" indentationWidth="10" reuseIdentifier="GameCell" rowHeight="112" id="KGk-i7-Jjw" customClass="GameCell" customModule="Gamer_s_Calendar" customModuleProvider="target">
+        <tableViewCell contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="GameCell" rowHeight="112" id="KGk-i7-Jjw" customClass="GameCell" customModule="Gamer_s_Calendar" customModuleProvider="target">
             <rect key="frame" x="0.0" y="0.0" width="390" height="112"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" tableViewCell="KGk-i7-Jjw" id="H2p-sc-9uM">
@@ -16,7 +16,7 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <imageView clipsSubviews="YES" userInteractionEnabled="NO" tag="3" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="Kfl-Wg-j9f">
-                        <rect key="frame" x="16" y="12" width="88" height="88"/>
+                        <rect key="frame" x="16" y="16" width="142" height="80"/>
                     </imageView>
                     <label opaque="NO" userInteractionEnabled="NO" tag="1" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Название игры" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="tPy-JX-7hx">
                         <rect key="frame" x="116" y="15" width="258" height="41"/>
@@ -39,9 +39,9 @@
                 </subviews>
                 <constraints>
                     <constraint firstItem="Kfl-Wg-j9f" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leadingMargin" id="image-leading"/>
-                    <constraint firstItem="Kfl-Wg-j9f" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="top" constant="12" id="image-top"/>
-                    <constraint firstItem="Kfl-Wg-j9f" firstAttribute="width" constant="88" id="image-width"/>
-                    <constraint firstItem="Kfl-Wg-j9f" firstAttribute="height" constant="88" id="image-height"/>
+                    <constraint firstItem="Kfl-Wg-j9f" firstAttribute="centerY" secondItem="H2p-sc-9uM" secondAttribute="centerY" id="image-top"/>
+                    <constraint firstItem="Kfl-Wg-j9f" firstAttribute="width" constant="142" id="image-width"/>
+                    <constraint firstItem="Kfl-Wg-j9f" firstAttribute="height" constant="80" id="image-height"/>
                     <constraint firstItem="tPy-JX-7hx" firstAttribute="leading" secondItem="Kfl-Wg-j9f" secondAttribute="trailing" constant="12" id="title-leading"/>
                     <constraint firstItem="tPy-JX-7hx" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="top" constant="15" id="title-top"/>
                     <constraint firstItem="tPy-JX-7hx" firstAttribute="trailing" secondItem="H2p-sc-9uM" secondAttribute="trailingMargin" id="title-trailing"/>

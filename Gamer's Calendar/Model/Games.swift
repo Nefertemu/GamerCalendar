@@ -2,10 +2,22 @@
 import UIKit
 
 struct GamesStorage {
+    let id: Int
     let gameTitle: String
     let imageURL: URL?
     let releaseDate: Date?
     let platforms: String
+}
+
+/// Подробности об игре с экрана деталей: описание, жанры, разработчики, скриншоты.
+struct GameDetails {
+    let about: String
+    let genres: String
+    let developers: String
+    let screenshots: [URL]
+    /// Средний рейтинг RAWG по пятибалльной шкале.
+    let rating: Double
+    let ratingsCount: Int
 }
 
 /// Простой кэш загруженных обложек, чтобы не тянуть одну и ту же картинку
@@ -41,12 +53,14 @@ struct RawgGamesResponse: Decodable {
 }
 
 struct RawgGame: Decodable {
+    let id: Int
     let name: String
     let released: String?
     let backgroundImage: URL?
     let platforms: [RawgPlatformWrapper]?
 
     enum CodingKeys: String, CodingKey {
+        case id
         case name
         case released
         case backgroundImage = "background_image"
@@ -62,20 +76,48 @@ struct RawgPlatform: Decodable {
     let name: String
 }
 
+struct RawgGameDetailResponse: Decodable {
+    let descriptionRaw: String?
+    let genres: [RawgNamed]?
+    let developers: [RawgNamed]?
+    let rating: Double?
+    let ratingsCount: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case descriptionRaw = "description_raw"
+        case genres
+        case developers
+        case rating
+        case ratingsCount = "ratings_count"
+    }
+}
+
+struct RawgNamed: Decodable {
+    let name: String
+}
+
+struct RawgScreenshotsResponse: Decodable {
+    let results: [RawgScreenshot]
+}
+
+struct RawgScreenshot: Decodable {
+    let image: URL
+}
+
 final class RawgService {
     private let apiKey = "f07deefc2bc44d598924364d1352b9db"
 
     /// Максимальный размер страницы, разрешённый RAWG API.
     static let pageSize = 40
 
-    func fetchGames(page: Int = 1) async throws -> (games: [GamesStorage], hasMore: Bool) {
+    func fetchGames(page: Int = 1, yearsAhead: Int = 3) async throws -> (games: [GamesStorage], hasMore: Bool) {
         let dateFormatter = DateFormatter()
         dateFormatter.locale = Locale(identifier: "en_US_POSIX")
         dateFormatter.dateFormat = "yyyy-MM-dd"
 
         let today = Date()
-        let threeYearsLater = Calendar.current.date(byAdding: .year, value: 3, to: today) ?? today
-        let datesRange = "\(dateFormatter.string(from: today)),\(dateFormatter.string(from: threeYearsLater))"
+        let endDate = Calendar.current.date(byAdding: .year, value: yearsAhead, to: today) ?? today
+        let datesRange = "\(dateFormatter.string(from: today)),\(dateFormatter.string(from: endDate))"
 
         var components = URLComponents(string: "https://api.rawg.io/api/games")!
         components.queryItems = [
@@ -98,6 +140,7 @@ final class RawgService {
             }
 
             return GamesStorage(
+                id: game.id,
                 gameTitle: game.name,
                 imageURL: game.backgroundImage,
                 releaseDate: releaseDate,
@@ -108,5 +151,32 @@ final class RawgService {
         }
 
         return (games, response.next != nil)
+    }
+
+    func fetchGameDetails(id: Int) async throws -> GameDetails {
+        // Описание и скриншоты — разные эндпоинты, грузим параллельно.
+        async let detailData = URLSession.shared.data(from: endpointURL(path: "games/\(id)"))
+        async let screenshotsData = URLSession.shared.data(from: endpointURL(path: "games/\(id)/screenshots"))
+
+        let detail = try JSONDecoder().decode(RawgGameDetailResponse.self, from: await detailData.0)
+
+        // Скриншоты не критичны: если их не удалось загрузить, показываем остальное.
+        let screenshots = (try? JSONDecoder().decode(RawgScreenshotsResponse.self, from: await screenshotsData.0))?
+            .results.map(\.image) ?? []
+
+        return GameDetails(
+            about: detail.descriptionRaw ?? "",
+            genres: detail.genres?.map(\.name).joined(separator: ", ") ?? "",
+            developers: detail.developers?.map(\.name).joined(separator: ", ") ?? "",
+            screenshots: screenshots,
+            rating: detail.rating ?? 0,
+            ratingsCount: detail.ratingsCount ?? 0
+        )
+    }
+
+    private func endpointURL(path: String) -> URL {
+        var components = URLComponents(string: "https://api.rawg.io/api/\(path)")!
+        components.queryItems = [URLQueryItem(name: "key", value: apiKey)]
+        return components.url!
     }
 }
