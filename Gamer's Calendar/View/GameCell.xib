@@ -54,8 +54,10 @@
                 </constraints>
             </tableViewCellContentView>
             <connections>
-                <outlet property="gameTitile" destination="tPy-JX-7hx" id="prj-de-jP5"/>
-                <outlet property="releaseDate" destination="N5F-YZ-rLp" id="mLw-ah-zC9"/>
+                <outlet property="gameImageView" destination="Kfl-Wg-j9f" id="img-out-001"/>
+                <outlet property="gameTitleLabel" destination="tPy-JX-7hx" id="prj-de-jP5"/>
+                <outlet property="platformsLabel" destination="tdj-lZ-UeC" id="plt-out-002"/>
+                <outlet property="releaseDateLabel" destination="N5F-YZ-rLp" id="mLw-ah-zC9"/>
             </connections>
             <point key="canvasLocation" x="0.0" y="73.995535714285708"/>
         </tableViewCell>
