@@ -34,18 +34,23 @@ class GameCell: UITableViewCell {
         gameImageView.image = UIImage(systemName: "photo")
     }
 
-    func configure(with game: GamesStorage, showCountdown: Bool = false) {
+    func configure(with game: GamesStorage, showCountdown: Bool = false, dateChanged: Bool = false) {
         gameTitleLabel.text = game.gameTitle
-        releaseDateLabel.text = releaseDateText(for: game.releaseDate, showCountdown: showCountdown)
+        releaseDateLabel.text = releaseDateText(for: game.releaseDate, showCountdown: showCountdown, dateChanged: dateChanged)
+        releaseDateLabel.textColor = dateChanged ? .systemOrange : .secondaryLabel
 
         showPlatformIcons(game.platformBadges)
         loadImage(from: game.imageURL)
     }
 
-    private func releaseDateText(for releaseDate: Date?, showCountdown: Bool) -> String {
+    private func releaseDateText(for releaseDate: Date?, showCountdown: Bool, dateChanged: Bool) -> String {
         guard let releaseDate else { return String(localized: "Unknown date") }
 
         let dateText = releaseDate.formatted(date: .abbreviated, time: .omitted)
+
+        if dateChanged {
+            return "\(dateText) · \(String(localized: "New date!"))"
+        }
         guard showCountdown else { return dateText }
 
         if releaseDate <= .now {

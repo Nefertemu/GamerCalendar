@@ -62,6 +62,14 @@ class TableViewController: UITableViewController {
         setupSearch()
         setupRefreshControl()
         updateMenus()
+
+        // Показываем прошлую первую страницу мгновенно, пока грузится свежая.
+        let cached = FirstPageCache.load()
+        if !cached.isEmpty {
+            append(cached)
+            tableView.reloadData()
+        }
+
         loadNextPage()
     }
 
@@ -187,6 +195,15 @@ class TableViewController: UITableViewController {
                 // Пока грузилась страница, пользователь мог сменить фильтры —
                 // тогда этот ответ уже устарел и его нельзя добавлять в список.
                 guard generation == loadGeneration else { return }
+
+                if currentPage == 1 {
+                    // Первая страница из сети заменяет кэшированную с запуска.
+                    sections = []
+
+                    if searchQuery == nil, platformFilter == nil, sortOrder == .releaseDate {
+                        FirstPageCache.save(fetched)
+                    }
+                }
 
                 append(fetched)
                 hasMorePages = hasMore

@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 55;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -23,6 +23,10 @@
 		43949C492FFBB165009E11E5 /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43949C482FFBB165009E11E5 /* Secrets.swift */; };
 		43949C4B2FFBB18F009E11E5 /* ReminderService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43949C4A2FFBB18F009E11E5 /* ReminderService.swift */; };
 		43949C4D2FFC34BE009E11E5 /* WatchlistViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43949C4C2FFC34BE009E11E5 /* WatchlistViewController.swift */; };
+		43949C552FFC3AD8009E11E5 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 43949C542FFC3AD8009E11E5 /* WidgetKit.framework */; };
+		43949C572FFC3AD8009E11E5 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 43949C562FFC3AD8009E11E5 /* SwiftUI.framework */; };
+		43949C642FFC3AD8009E11E5 /* GamerCalendarWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 43949C522FFC3AD8009E11E5 /* GamerCalendarWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		43949C6D2FFC3BB8009E11E5 /* GamerCalendarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43949C6C2FFC3BB8009E11E5 /* GamerCalendarTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -40,7 +44,28 @@
 			remoteGlobalIDString = 2234B4A72822BF0100B8CCB0;
 			remoteInfo = "Gamer's Calendar";
 		};
+		43949C622FFC3AD8009E11E5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2234B4A02822BF0100B8CCB0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 43949C512FFC3AD8009E11E5;
+			remoteInfo = GamerCalendarWidgetExtension;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		43949C692FFC3AD8009E11E5 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				43949C642FFC3AD8009E11E5 /* GamerCalendarWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		2234B4A82822BF0100B8CCB0 /* Gamer's Calendar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Gamer's Calendar.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -63,7 +88,28 @@
 		43949C482FFBB165009E11E5 /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
 		43949C4A2FFBB18F009E11E5 /* ReminderService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderService.swift; sourceTree = "<group>"; };
 		43949C4C2FFC34BE009E11E5 /* WatchlistViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistViewController.swift; sourceTree = "<group>"; };
+		43949C522FFC3AD8009E11E5 /* GamerCalendarWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = GamerCalendarWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		43949C542FFC3AD8009E11E5 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		43949C562FFC3AD8009E11E5 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		43949C6A2FFC3B09009E11E5 /* Gamer's Calendar.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Gamer's Calendar.entitlements"; sourceTree = "<group>"; };
+		43949C6B2FFC3B4C009E11E5 /* GamerCalendarWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = GamerCalendarWidgetExtension.entitlements; sourceTree = "<group>"; };
+		43949C6C2FFC3BB8009E11E5 /* GamerCalendarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamerCalendarTests.swift; sourceTree = "<group>"; };
+		43949C6E2FFC3BC5009E11E5 /* Gamer's CalendarTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Gamer's CalendarTests-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		43949C652FFC3AD8009E11E5 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 43949C512FFC3AD8009E11E5 /* GamerCalendarWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		43949C582FFC3AD8009E11E5 /* GamerCalendarWidget */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (43949C652FFC3AD8009E11E5 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = GamerCalendarWidget; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		2234B4A52822BF0100B8CCB0 /* Frameworks */ = {
@@ -87,14 +133,28 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		43949C4F2FFC3AD8009E11E5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				43949C572FFC3AD8009E11E5 /* SwiftUI.framework in Frameworks */,
+				43949C552FFC3AD8009E11E5 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		2234B49F2822BF0100B8CCB0 = {
 			isa = PBXGroup;
 			children = (
+				43949C6C2FFC3BB8009E11E5 /* GamerCalendarTests.swift */,
+				43949C6B2FFC3B4C009E11E5 /* GamerCalendarWidgetExtension.entitlements */,
 				2234B4AA2822BF0100B8CCB0 /* Gamer's Calendar */,
+				43949C582FFC3AD8009E11E5 /* GamerCalendarWidget */,
+				43949C532FFC3AD8009E11E5 /* Frameworks */,
 				2234B4A92822BF0100B8CCB0 /* Products */,
+				43949C6E2FFC3BC5009E11E5 /* Gamer's CalendarTests-Bridging-Header.h */,
 			);
 			sourceTree = "<group>";
 		};
@@ -104,6 +164,7 @@
 				2234B4A82822BF0100B8CCB0 /* Gamer's Calendar.app */,
 				2234B4BE2822BF0400B8CCB0 /* Gamer's CalendarTests.xctest */,
 				2234B4C82822BF0400B8CCB0 /* Gamer's CalendarUITests.xctest */,
+				43949C522FFC3AD8009E11E5 /* GamerCalendarWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -111,6 +172,7 @@
 		2234B4AA2822BF0100B8CCB0 /* Gamer's Calendar */ = {
 			isa = PBXGroup;
 			children = (
+				43949C6A2FFC3B09009E11E5 /* Gamer's Calendar.entitlements */,
 				2234B4E02822C8B800B8CCB0 /* View */,
 				2234B4AB2822BF0100B8CCB0 /* AppDelegate.swift */,
 				2234B4AD2822BF0100B8CCB0 /* SceneDelegate.swift */,
@@ -148,6 +210,15 @@
 			path = View;
 			sourceTree = "<group>";
 		};
+		43949C532FFC3AD8009E11E5 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				43949C542FFC3AD8009E11E5 /* WidgetKit.framework */,
+				43949C562FFC3AD8009E11E5 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -158,10 +229,12 @@
 				2234B4A42822BF0100B8CCB0 /* Sources */,
 				2234B4A52822BF0100B8CCB0 /* Frameworks */,
 				2234B4A62822BF0100B8CCB0 /* Resources */,
+				43949C692FFC3AD8009E11E5 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				43949C632FFC3AD8009E11E5 /* PBXTargetDependency */,
 			);
 			name = "Gamer's Calendar";
 			productName = "Gamer's Calendar";
@@ -204,6 +277,28 @@
 			productReference = 2234B4C82822BF0400B8CCB0 /* Gamer's CalendarUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		43949C512FFC3AD8009E11E5 /* GamerCalendarWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 43949C662FFC3AD8009E11E5 /* Build configuration list for PBXNativeTarget "GamerCalendarWidgetExtension" */;
+			buildPhases = (
+				43949C4E2FFC3AD8009E11E5 /* Sources */,
+				43949C4F2FFC3AD8009E11E5 /* Frameworks */,
+				43949C502FFC3AD8009E11E5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				43949C582FFC3AD8009E11E5 /* GamerCalendarWidget */,
+			);
+			name = GamerCalendarWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = GamerCalendarWidgetExtension;
+			productReference = 43949C522FFC3AD8009E11E5 /* GamerCalendarWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -211,7 +306,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1330;
+				LastSwiftUpdateCheck = 2660;
 				LastUpgradeCheck = 2660;
 				TargetAttributes = {
 					2234B4A72822BF0100B8CCB0 = {
@@ -219,11 +314,15 @@
 					};
 					2234B4BD2822BF0400B8CCB0 = {
 						CreatedOnToolsVersion = 13.3.1;
+						LastSwiftMigration = 2660;
 						TestTargetID = 2234B4A72822BF0100B8CCB0;
 					};
 					2234B4C72822BF0400B8CCB0 = {
 						CreatedOnToolsVersion = 13.3.1;
 						TestTargetID = 2234B4A72822BF0100B8CCB0;
+					};
+					43949C512FFC3AD8009E11E5 = {
+						CreatedOnToolsVersion = 26.6;
 					};
 				};
 			};
@@ -244,6 +343,7 @@
 				2234B4A72822BF0100B8CCB0 /* Gamer's Calendar */,
 				2234B4BD2822BF0400B8CCB0 /* Gamer's CalendarTests */,
 				2234B4C72822BF0400B8CCB0 /* Gamer's CalendarUITests */,
+				43949C512FFC3AD8009E11E5 /* GamerCalendarWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -276,6 +376,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		43949C502FFC3AD8009E11E5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -300,10 +407,18 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				43949C6D2FFC3BB8009E11E5 /* GamerCalendarTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		2234B4C42822BF0400B8CCB0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		43949C4E2FFC3AD8009E11E5 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -322,6 +437,11 @@
 			isa = PBXTargetDependency;
 			target = 2234B4A72822BF0100B8CCB0 /* Gamer's Calendar */;
 			targetProxy = 2234B4C92822BF0400B8CCB0 /* PBXContainerItemProxy */;
+		};
+		43949C632FFC3AD8009E11E5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 43949C512FFC3AD8009E11E5 /* GamerCalendarWidgetExtension */;
+			targetProxy = 43949C622FFC3AD8009E11E5 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -472,6 +592,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Gamer's Calendar/Gamer's Calendar.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -502,6 +623,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Gamer's Calendar/Gamer's Calendar.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -531,6 +653,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -539,6 +662,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.bogdan.Gamer-s-CalendarTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "Gamer's CalendarTests-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Gamer's Calendar.app/Gamer's Calendar";
@@ -549,6 +674,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -557,6 +683,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.bogdan.Gamer-s-CalendarTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "Gamer's CalendarTests-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Gamer's Calendar.app/Gamer's Calendar";
@@ -595,6 +722,75 @@
 			};
 			name = Release;
 		};
+		43949C672FFC3AD8009E11E5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = GamerCalendarWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GamerCalendarWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = GamerCalendarWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.bogdan.Gamer-s-Calendar.GamerCalendarWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		43949C682FFC3AD8009E11E5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = GamerCalendarWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GamerCalendarWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = GamerCalendarWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.bogdan.Gamer-s-Calendar.GamerCalendarWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -630,6 +826,15 @@
 			buildConfigurations = (
 				2234B4D92822BF0400B8CCB0 /* Debug */,
 				2234B4DA2822BF0400B8CCB0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		43949C662FFC3AD8009E11E5 /* Build configuration list for PBXNativeTarget "GamerCalendarWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				43949C672FFC3AD8009E11E5 /* Debug */,
+				43949C682FFC3AD8009E11E5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

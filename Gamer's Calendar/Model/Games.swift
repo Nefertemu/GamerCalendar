@@ -116,6 +116,29 @@ final class ImageCache {
     }
 }
 
+/// Дисковый кэш первой страницы списка: при запуске игры показываются
+/// мгновенно, пока по сети грузится свежая версия.
+enum FirstPageCache {
+
+    private static var fileURL: URL {
+        FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("firstPage.json")
+    }
+
+    static func load() -> [GamesStorage] {
+        guard let data = try? Data(contentsOf: fileURL),
+              let games = try? JSONDecoder().decode([GamesStorage].self, from: data) else {
+            return []
+        }
+        return games
+    }
+
+    static func save(_ games: [GamesStorage]) {
+        try? JSONEncoder().encode(games).write(to: fileURL)
+    }
+
+}
+
 // MARK: - Ответы IGDB
 
 struct IGDBGame: Decodable {
@@ -230,8 +253,22 @@ final class IGDBService {
         return (fetched.map(gamesStorage(from:)), fetched.count == Self.pageSize)
     }
 
-    /// Приводит игру IGDB к модели приложения.
-    private func gamesStorage(from game: IGDBGame) -> GamesStorage {
+    /// Загружает конкретные игры по их id — для сверки дат отслеживаемых игр.
+    func fetchGames(ids: [Int]) async throws -> [GamesStorage] {
+        guard !ids.isEmpty else { return [] }
+
+        let query = """
+        fields name, first_release_date, cover.image_id, screenshots.image_id, platforms.name, platforms.platform_family;
+        where id = (\(ids.map(String.init).joined(separator: ",")));
+        limit \(ids.count);
+        """
+
+        let data = try await requestData(endpoint: "games", query: query)
+        return try decoder.decode([IGDBGame].self, from: data).map(gamesStorage(from:))
+    }
+
+    /// Приводит игру IGDB к модели приложения. Internal для юнит-тестов.
+    func gamesStorage(from game: IGDBGame) -> GamesStorage {
         GamesStorage(
             id: game.id,
             gameTitle: game.name,
@@ -274,7 +311,8 @@ final class IGDBService {
     }
 
     /// Отбирает магазины и официальный сайт из ссылок IGDB (websites.type).
-    private func links(from websites: [IGDBWebsite]?) -> [GameLink] {
+    /// Internal для юнит-тестов.
+    func links(from websites: [IGDBWebsite]?) -> [GameLink] {
         let knownTypes: [(type: Int, title: String)] = [
             (13, "Steam"),
             (23, "PlayStation Store"),
@@ -333,7 +371,8 @@ final class IGDBService {
 
     /// Сводит конкретные платформы IGDB к иконкам: консоли — по семейству
     /// (1 PlayStation, 2 Xbox, 5 Nintendo, 4 Linux), остальные — по id платформы.
-    private func platformBadges(for platforms: [IGDBPlatform]?) -> [PlatformBadge] {
+    /// Internal для юнит-тестов.
+    func platformBadges(for platforms: [IGDBPlatform]?) -> [PlatformBadge] {
         var badges = Set<PlatformBadge>()
 
         for platform in platforms ?? [] {

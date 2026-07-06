@@ -8,6 +8,9 @@ class WatchlistViewController: UITableViewController {
     private var games: [GamesStorage] = []
     private let gameService = IGDBService()
 
+    /// Игры, у которых при последней сверке с IGDB изменилась дата релиза.
+    private var changedGameIDs: Set<Int> = []
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -24,6 +27,17 @@ class WatchlistViewController: UITableViewController {
         super.viewWillAppear(animated)
         // Колокольчик могли переключить на экране игры — перечитываем список.
         reload()
+        refreshReleaseDates()
+    }
+
+    /// Даты релизов часто переносят — сверяем сохранённые игры с IGDB.
+    private func refreshReleaseDates() {
+        Task {
+            let changed = await ReminderService.shared.refreshReleaseDates(using: gameService)
+            guard !changed.isEmpty else { return }
+            changedGameIDs.formUnion(changed)
+            reload()
+        }
     }
 
     private func reload() {
@@ -65,8 +79,9 @@ class WatchlistViewController: UITableViewController {
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let game = games[indexPath.row]
         let cell = tableView.dequeueReusableCell(withIdentifier: "GameCell", for: indexPath) as! GameCell
-        cell.configure(with: games[indexPath.row], showCountdown: true)
+        cell.configure(with: game, showCountdown: true, dateChanged: changedGameIDs.contains(game.id))
         return cell
     }
 

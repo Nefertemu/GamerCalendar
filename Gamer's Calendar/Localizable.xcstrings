@@ -225,6 +225,16 @@
         }
       }
     },
+    "New date!" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Новая дата!"
+          }
+        }
+      }
+    },
     "No games found" : {
       "localizations" : {
         "ru" : {
