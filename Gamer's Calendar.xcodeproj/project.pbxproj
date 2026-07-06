@@ -18,6 +18,8 @@
 		2234B4E62822C91A00B8CCB0 /* GameCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2234B4E42822C91A00B8CCB0 /* GameCell.xib */; };
 		4393834C2FFAE21E003ACC20 /* GameDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4393834B2FFAE21E003ACC20 /* GameDetailViewController.swift */; };
 		4393834E2FFAE2E2003ACC20 /* ScreenshotViewerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4393834D2FFAE2E2003ACC20 /* ScreenshotViewerController.swift */; };
+		43949C452FFBAE26009E11E5 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 43949C442FFBAE26009E11E5 /* Localizable.xcstrings */; };
+		43949C472FFBAE29009E11E5 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 43949C462FFBAE29009E11E5 /* InfoPlist.xcstrings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -53,6 +55,8 @@
 		2234B4E42822C91A00B8CCB0 /* GameCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = GameCell.xib; sourceTree = "<group>"; };
 		4393834B2FFAE21E003ACC20 /* GameDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameDetailViewController.swift; sourceTree = "<group>"; };
 		4393834D2FFAE2E2003ACC20 /* ScreenshotViewerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotViewerController.swift; sourceTree = "<group>"; };
+		43949C442FFBAE26009E11E5 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		43949C462FFBAE29009E11E5 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,6 +116,8 @@
 				2234B4B92822BF0400B8CCB0 /* Info.plist */,
 				4393834B2FFAE21E003ACC20 /* GameDetailViewController.swift */,
 				4393834D2FFAE2E2003ACC20 /* ScreenshotViewerController.swift */,
+				43949C442FFBAE26009E11E5 /* Localizable.xcstrings */,
+				43949C462FFBAE29009E11E5 /* InfoPlist.xcstrings */,
 			);
 			path = "Gamer's Calendar";
 			sourceTree = "<group>";
@@ -219,6 +225,7 @@
 			knownRegions = (
 				en,
 				Base,
+				ru,
 			);
 			mainGroup = 2234B49F2822BF0100B8CCB0;
 			productRefGroup = 2234B4A92822BF0100B8CCB0 /* Products */;
@@ -237,7 +244,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				43949C472FFBAE29009E11E5 /* InfoPlist.xcstrings in Resources */,
 				2234B4B82822BF0400B8CCB0 /* LaunchScreen.storyboard in Resources */,
+				43949C452FFBAE26009E11E5 /* Localizable.xcstrings in Resources */,
 				2234B4B52822BF0400B8CCB0 /* Assets.xcassets in Resources */,
 				2234B4B32822BF0100B8CCB0 /* Main.storyboard in Resources */,
 				2234B4E62822C91A00B8CCB0 /* GameCell.xib in Resources */,

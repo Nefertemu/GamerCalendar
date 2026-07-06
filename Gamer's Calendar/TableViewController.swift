@@ -18,7 +18,7 @@ class TableViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        title = "Upcoming Games"
+        title = String(localized: "Upcoming Games")
         navigationController?.navigationBar.prefersLargeTitles = true
 
         tableView.rowHeight = 112
@@ -44,16 +44,13 @@ class TableViewController: UITableViewController {
 
         navigationItem.rightBarButtonItem = UIBarButtonItem(
             image: UIImage(systemName: "calendar"),
-            menu: UIMenu(title: "Показывать игры на", children: actions)
+            menu: UIMenu(title: String(localized: "Show games for"), children: actions)
         )
     }
 
     private func yearsTitle(for years: Int) -> String {
-        switch years {
-        case 1: return "1 год"
-        case 2, 3, 4: return "\(years) года"
-        default: return "\(years) лет"
-        }
+        // Формы множественного числа берутся из каталога строк (Localizable.xcstrings).
+        String(localized: "\(years) years")
     }
 
     private func reloadFromScratch() {

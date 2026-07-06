@@ -79,12 +79,12 @@ class GameDetailViewController: UIViewController {
         let releaseLabel = UILabel()
         releaseLabel.font = .systemFont(ofSize: 15)
         releaseLabel.textColor = .secondaryLabel
-        let dateText = game.releaseDate?.formatted(date: .long, time: .omitted) ?? "Unknown date"
-        releaseLabel.text = "Дата выхода: \(dateText)"
+        let dateText = game.releaseDate?.formatted(date: .long, time: .omitted) ?? String(localized: "Unknown date")
+        releaseLabel.text = String(localized: "Release date: \(dateText)")
         addPadded(releaseLabel)
 
         if !game.platforms.isEmpty {
-            addSection(header: "Платформы", text: game.platforms)
+            addSection(header: String(localized: "Platforms"), text: game.platforms)
         }
 
         spinner.startAnimating()
@@ -111,15 +111,15 @@ class GameDetailViewController: UIViewController {
         addRating(details)
 
         if !details.about.isEmpty {
-            addSection(header: "Об игре", text: details.about)
+            addSection(header: String(localized: "About"), text: details.about)
         }
 
         if !details.genres.isEmpty {
-            addSection(header: "Жанры", text: details.genres)
+            addSection(header: String(localized: "Genres"), text: details.genres)
         }
 
         if !details.developers.isEmpty {
-            addSection(header: "Разработчики", text: details.developers)
+            addSection(header: String(localized: "Developers"), text: details.developers)
         }
 
         if !details.screenshots.isEmpty {
@@ -149,21 +149,15 @@ class GameDetailViewController: UIViewController {
         } else {
             ratingLabel.font = .systemFont(ofSize: 15)
             ratingLabel.textColor = .secondaryLabel
-            ratingLabel.text = "Пока нет оценок"
+            ratingLabel.text = String(localized: "No ratings yet")
         }
 
         addPadded(ratingLabel)
     }
 
     private func ratingsCountText(_ count: Int) -> String {
-        let word: String
-        switch (count % 100, count % 10) {
-        case (11...14, _): word = "оценок"
-        case (_, 1): word = "оценка"
-        case (_, 2...4): word = "оценки"
-        default: word = "оценок"
-        }
-        return "\(count) \(word)"
+        // Формы множественного числа берутся из каталога строк (Localizable.xcstrings).
+        String(localized: "\(count) ratings")
     }
 
     private func showError() {
@@ -171,7 +165,7 @@ class GameDetailViewController: UIViewController {
         errorLabel.font = .systemFont(ofSize: 15)
         errorLabel.textColor = .secondaryLabel
         errorLabel.textAlignment = .center
-        errorLabel.text = "Не удалось загрузить подробности"
+        errorLabel.text = String(localized: "Couldn't load details")
         addPadded(errorLabel)
     }
 
@@ -196,7 +190,7 @@ class GameDetailViewController: UIViewController {
     private func addScreenshots(_ urls: [URL]) {
         let headerLabel = UILabel()
         headerLabel.font = .systemFont(ofSize: 20, weight: .semibold)
-        headerLabel.text = "Скриншоты"
+        headerLabel.text = String(localized: "Screenshots")
         addPadded(headerLabel)
         contentStack.setCustomSpacing(8, after: headerLabel)
 

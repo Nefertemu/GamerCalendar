@@ -36,8 +36,8 @@ class GameCell: UITableViewCell {
 
     func configure(with game: GamesStorage) {
         gameTitleLabel.text = game.gameTitle
-        platformsLabel.text = game.platforms.isEmpty ? "Unknown platform" : game.platforms
-        releaseDateLabel.text = game.releaseDate?.formatted(date: .abbreviated, time: .omitted) ?? "Unknown date"
+        platformsLabel.text = game.platforms.isEmpty ? String(localized: "Unknown platform") : game.platforms
+        releaseDateLabel.text = game.releaseDate?.formatted(date: .abbreviated, time: .omitted) ?? String(localized: "Unknown date")
 
         loadImage(from: game.imageURL)
     }
