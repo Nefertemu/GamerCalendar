@@ -12,3 +12,6 @@ DerivedData/
 
 # macOS
 .DS_Store
+
+# Секреты (API-ключи) — файл создаётся локально, см. Secrets.swift
+Secrets.swift

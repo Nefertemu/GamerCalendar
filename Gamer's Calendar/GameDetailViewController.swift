@@ -31,6 +31,47 @@ class GameDetailViewController: UIViewController {
         setupLayout()
         showBasicInfo()
         loadDetails()
+        updateReminderButton()
+    }
+
+    // MARK: - Напоминание о релизе
+
+    private func updateReminderButton() {
+        let hasReminder = ReminderService.shared.hasReminder(for: game.id)
+        navigationItem.rightBarButtonItem = UIBarButtonItem(
+            image: UIImage(systemName: hasReminder ? "bell.fill" : "bell"),
+            primaryAction: UIAction { [weak self] _ in self?.toggleReminder() }
+        )
+    }
+
+    private func toggleReminder() {
+        if ReminderService.shared.hasReminder(for: game.id) {
+            ReminderService.shared.removeReminder(for: game.id)
+            updateReminderButton()
+        } else {
+            Task {
+                let added = await ReminderService.shared.addReminder(for: game)
+                if !added {
+                    showNotificationsDeniedAlert()
+                }
+                updateReminderButton()
+            }
+        }
+    }
+
+    private func showNotificationsDeniedAlert() {
+        let alert = UIAlertController(
+            title: String(localized: "Notifications are off"),
+            message: String(localized: "Allow notifications in Settings to get release reminders."),
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: String(localized: "Open Settings"), style: .default) { _ in
+            if let url = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(url)
+            }
+        })
+        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
+        present(alert, animated: true)
     }
 
     // MARK: - Layout

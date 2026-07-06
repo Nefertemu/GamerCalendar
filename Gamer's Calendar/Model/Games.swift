@@ -26,6 +26,14 @@ final class ImageCache {
     static let shared = ImageCache()
     private let cache = NSCache<NSURL, UIImage>()
 
+    /// Сессия с дисковым кэшем: картинки не скачиваются заново после перезапуска.
+    private let session: URLSession = {
+        let configuration = URLSessionConfiguration.default
+        configuration.urlCache = URLCache(memoryCapacity: 32 * 1024 * 1024, diskCapacity: 256 * 1024 * 1024)
+        configuration.requestCachePolicy = .returnCacheDataElseLoad
+        return URLSession(configuration: configuration)
+    }()
+
     private init() {}
 
     func image(for url: URL) -> UIImage? {
@@ -37,7 +45,7 @@ final class ImageCache {
             return cached
         }
 
-        guard let (data, _) = try? await URLSession.shared.data(from: url),
+        guard let (data, _) = try? await session.data(from: url),
               let image = UIImage(data: data) else {
             return nil
         }
@@ -105,12 +113,12 @@ struct RawgScreenshot: Decodable {
 }
 
 final class RawgService {
-    private let apiKey = "f07deefc2bc44d598924364d1352b9db"
+    private let apiKey = Secrets.rawgAPIKey
 
     /// Максимальный размер страницы, разрешённый RAWG API.
     static let pageSize = 40
 
-    func fetchGames(page: Int = 1, yearsAhead: Int = 3) async throws -> (games: [GamesStorage], hasMore: Bool) {
+    func fetchGames(page: Int = 1, yearsAhead: Int = 3, search: String? = nil, parentPlatform: Int? = nil) async throws -> (games: [GamesStorage], hasMore: Bool) {
         let dateFormatter = DateFormatter()
         dateFormatter.locale = Locale(identifier: "en_US_POSIX")
         dateFormatter.dateFormat = "yyyy-MM-dd"
@@ -127,6 +135,13 @@ final class RawgService {
             URLQueryItem(name: "dates", value: datesRange),
             URLQueryItem(name: "ordering", value: "released")
         ]
+
+        if let search {
+            components.queryItems?.append(URLQueryItem(name: "search", value: search))
+        }
+        if let parentPlatform {
+            components.queryItems?.append(URLQueryItem(name: "parent_platforms", value: String(parentPlatform)))
+        }
 
         let url = components.url!
         let (data, _) = try await URLSession.shared.data(from: url)

@@ -3,17 +3,58 @@ import UIKit
 
 class TableViewController: UITableViewController {
 
-    private var games: [GamesStorage] = []
+    /// Игры, сгруппированные по месяцу релиза.
+    private struct MonthSection {
+        let month: Date
+        var games: [GamesStorage]
+    }
+
+    private var sections: [MonthSection] = []
     private let rawgService = RawgService()
 
     private var currentPage = 1
     private var hasMorePages = true
     private var isLoading = false
 
+    /// Растёт при каждом сбросе списка; ответы устаревших запросов отбрасываются.
+    private var loadGeneration = 0
+
     private let yearOptions = [1, 2, 3, 5]
     private var yearsAhead = 3 {
         didSet { reloadFromScratch() }
     }
+
+    /// Родительские платформы RAWG: rawValue — id для параметра parent_platforms.
+    private enum PlatformFilter: Int, CaseIterable {
+        case pc = 1
+        case playstation = 2
+        case xbox = 3
+        case nintendo = 7
+
+        var title: String {
+            switch self {
+            case .pc: return "PC"
+            case .playstation: return "PlayStation"
+            case .xbox: return "Xbox"
+            case .nintendo: return "Nintendo"
+            }
+        }
+    }
+
+    private var platformFilter: PlatformFilter? {
+        didSet { reloadFromScratch() }
+    }
+
+    private var searchQuery: String? {
+        didSet { reloadFromScratch() }
+    }
+    private var searchDebounceTask: Task<Void, Never>?
+
+    private let monthFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.setLocalizedDateFormatFromTemplate("LLLL yyyy")
+        return formatter
+    }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,14 +67,37 @@ class TableViewController: UITableViewController {
         let cellTypeNib = UINib(nibName: "GameCell", bundle: nil)
         tableView.register(cellTypeNib, forCellReuseIdentifier: "GameCell")
 
-        updateYearsMenu()
+        setupSearch()
+        setupRefreshControl()
+        updateMenus()
         loadNextPage()
     }
 
-    // MARK: - Выбор диапазона
+    // MARK: - Поиск
 
-    private func updateYearsMenu() {
-        let actions = yearOptions.map { years in
+    private func setupSearch() {
+        let searchController = UISearchController(searchResultsController: nil)
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = String(localized: "Search games")
+        searchController.searchResultsUpdater = self
+        navigationItem.searchController = searchController
+    }
+
+    // MARK: - Pull-to-refresh
+
+    private func setupRefreshControl() {
+        refreshControl = UIRefreshControl()
+        refreshControl?.addTarget(self, action: #selector(refreshPulled), for: .valueChanged)
+    }
+
+    @objc private func refreshPulled() {
+        reloadFromScratch()
+    }
+
+    // MARK: - Меню диапазона и платформ
+
+    private func updateMenus() {
+        let yearActions = yearOptions.map { years in
             UIAction(
                 title: yearsTitle(for: years),
                 state: years == yearsAhead ? .on : .off
@@ -42,10 +106,35 @@ class TableViewController: UITableViewController {
             }
         }
 
-        navigationItem.rightBarButtonItem = UIBarButtonItem(
+        let calendarButton = UIBarButtonItem(
             image: UIImage(systemName: "calendar"),
-            menu: UIMenu(title: String(localized: "Show games for"), children: actions)
+            menu: UIMenu(title: String(localized: "Show games for"), children: yearActions)
         )
+
+        let allPlatformsAction = UIAction(
+            title: String(localized: "All Platforms"),
+            state: platformFilter == nil ? .on : .off
+        ) { [weak self] _ in
+            self?.platformFilter = nil
+        }
+        let platformActions = [allPlatformsAction] + PlatformFilter.allCases.map { platform in
+            UIAction(
+                title: platform.title,
+                state: platform == platformFilter ? .on : .off
+            ) { [weak self] _ in
+                self?.platformFilter = platform
+            }
+        }
+
+        let filterIcon = platformFilter == nil
+            ? "line.3.horizontal.decrease.circle"
+            : "line.3.horizontal.decrease.circle.fill"
+        let filterButton = UIBarButtonItem(
+            image: UIImage(systemName: filterIcon),
+            menu: UIMenu(title: String(localized: "Platform"), children: platformActions)
+        )
+
+        navigationItem.rightBarButtonItems = [calendarButton, filterButton]
     }
 
     private func yearsTitle(for years: Int) -> String {
@@ -53,13 +142,17 @@ class TableViewController: UITableViewController {
         String(localized: "\(years) years")
     }
 
+    // MARK: - Загрузка
+
     private func reloadFromScratch() {
-        games = []
+        loadGeneration += 1
+        sections = []
         currentPage = 1
         hasMorePages = true
         isLoading = false
+        tableView.backgroundView = nil
         tableView.reloadData()
-        updateYearsMenu()
+        updateMenus()
         loadNextPage()
     }
 
@@ -67,57 +160,150 @@ class TableViewController: UITableViewController {
         guard hasMorePages, !isLoading else { return }
         isLoading = true
 
-        let requestedYears = yearsAhead
+        let generation = loadGeneration
 
         Task {
             do {
-                let (fetched, hasMore) = try await rawgService.fetchGames(page: currentPage, yearsAhead: requestedYears)
+                let (fetched, hasMore) = try await rawgService.fetchGames(
+                    page: currentPage,
+                    yearsAhead: yearsAhead,
+                    search: searchQuery,
+                    parentPlatform: platformFilter?.rawValue
+                )
 
-                // Пока грузилась страница, пользователь мог сменить диапазон —
+                // Пока грузилась страница, пользователь мог сменить фильтры —
                 // тогда этот ответ уже устарел и его нельзя добавлять в список.
-                guard requestedYears == yearsAhead else { return }
+                guard generation == loadGeneration else { return }
 
-                games.append(contentsOf: fetched)
+                append(fetched)
                 hasMorePages = hasMore
                 currentPage += 1
+                isLoading = false
                 tableView.reloadData()
+                showEmptyStateIfNeeded()
             } catch {
-                print("RAWG loading error:", error)
+                guard generation == loadGeneration else { return }
+                isLoading = false
+                if sections.isEmpty {
+                    showErrorState()
+                }
             }
 
-            if requestedYears == yearsAhead {
-                isLoading = false
+            refreshControl?.endRefreshing()
+        }
+    }
+
+    /// Раскладывает игры по секциям-месяцам. Игры приходят по возрастанию
+    /// даты релиза, поэтому новый месяц всегда добавляется в конец.
+    private func append(_ games: [GamesStorage]) {
+        let calendar = Calendar.current
+        for game in games {
+            guard let date = game.releaseDate else { continue }
+
+            if let lastIndex = sections.indices.last,
+               calendar.isDate(sections[lastIndex].month, equalTo: date, toGranularity: .month) {
+                sections[lastIndex].games.append(game)
+            } else {
+                let month = calendar.dateInterval(of: .month, for: date)?.start ?? date
+                sections.append(MonthSection(month: month, games: [game]))
             }
         }
+    }
+
+    // MARK: - Пустое состояние и ошибки
+
+    private func showEmptyStateIfNeeded() {
+        guard sections.isEmpty, !hasMorePages else { return }
+
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 15)
+        label.textColor = .secondaryLabel
+        label.textAlignment = .center
+        label.text = String(localized: "No games found")
+        tableView.backgroundView = label
+    }
+
+    private func showErrorState() {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 15)
+        label.textColor = .secondaryLabel
+        label.text = String(localized: "Couldn't load games")
+
+        var buttonConfig = UIButton.Configuration.borderedProminent()
+        buttonConfig.title = String(localized: "Retry")
+        let retryButton = UIButton(configuration: buttonConfig, primaryAction: UIAction { [weak self] _ in
+            self?.reloadFromScratch()
+        })
+
+        let stack = UIStackView(arrangedSubviews: [label, retryButton])
+        stack.axis = .vertical
+        stack.spacing = 12
+        stack.alignment = .center
+
+        let container = UIView()
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            stack.centerYAnchor.constraint(equalTo: container.centerYAnchor)
+        ])
+
+        tableView.backgroundView = container
     }
 
     // MARK: - Table view data source
 
     override func numberOfSections(in tableView: UITableView) -> Int {
-        1
+        sections.count
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        games.count
+        sections[section].games.count
+    }
+
+    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        monthFormatter.string(from: sections[section].month).capitalized
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "GameCell", for: indexPath) as! GameCell
-        cell.configure(with: games[indexPath.row])
+        cell.configure(with: sections[indexPath.section].games[indexPath.row])
         return cell
     }
 
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
 
-        let detailViewController = GameDetailViewController(game: games[indexPath.row], rawgService: rawgService)
+        let game = sections[indexPath.section].games[indexPath.row]
+        let detailViewController = GameDetailViewController(game: game, rawgService: rawgService)
         navigationController?.pushViewController(detailViewController, animated: true)
     }
 
     override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         // Подгружаем следующую страницу, когда пользователь долистал почти до конца.
-        if indexPath.row >= games.count - 5 {
+        guard indexPath.section == sections.count - 1 else { return }
+        if indexPath.row >= sections[indexPath.section].games.count - 5 {
             loadNextPage()
+        }
+    }
+
+}
+
+// MARK: - UISearchResultsUpdating
+
+extension TableViewController: UISearchResultsUpdating {
+
+    func updateSearchResults(for searchController: UISearchController) {
+        let text = searchController.searchBar.text?.trimmingCharacters(in: .whitespaces) ?? ""
+        let newQuery = text.isEmpty ? nil : text
+        guard newQuery != searchQuery else { return }
+
+        // Небольшая задержка, чтобы не дёргать API на каждую введённую букву.
+        searchDebounceTask?.cancel()
+        searchDebounceTask = Task {
+            try? await Task.sleep(nanoseconds: 400_000_000)
+            guard !Task.isCancelled else { return }
+            searchQuery = newQuery
         }
     }
 

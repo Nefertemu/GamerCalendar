@@ -20,6 +20,8 @@
 		4393834E2FFAE2E2003ACC20 /* ScreenshotViewerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4393834D2FFAE2E2003ACC20 /* ScreenshotViewerController.swift */; };
 		43949C452FFBAE26009E11E5 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 43949C442FFBAE26009E11E5 /* Localizable.xcstrings */; };
 		43949C472FFBAE29009E11E5 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 43949C462FFBAE29009E11E5 /* InfoPlist.xcstrings */; };
+		43949C492FFBB165009E11E5 /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43949C482FFBB165009E11E5 /* Secrets.swift */; };
+		43949C4B2FFBB18F009E11E5 /* ReminderService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43949C4A2FFBB18F009E11E5 /* ReminderService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +59,8 @@
 		4393834D2FFAE2E2003ACC20 /* ScreenshotViewerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotViewerController.swift; sourceTree = "<group>"; };
 		43949C442FFBAE26009E11E5 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		43949C462FFBAE29009E11E5 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
+		43949C482FFBB165009E11E5 /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
+		43949C4A2FFBB18F009E11E5 /* ReminderService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,6 +122,7 @@
 				4393834D2FFAE2E2003ACC20 /* ScreenshotViewerController.swift */,
 				43949C442FFBAE26009E11E5 /* Localizable.xcstrings */,
 				43949C462FFBAE29009E11E5 /* InfoPlist.xcstrings */,
+				43949C482FFBB165009E11E5 /* Secrets.swift */,
 			);
 			path = "Gamer's Calendar";
 			sourceTree = "<group>";
@@ -126,6 +131,7 @@
 			isa = PBXGroup;
 			children = (
 				2234B4DE2822C46900B8CCB0 /* Games.swift */,
+				43949C4A2FFBB18F009E11E5 /* ReminderService.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -275,12 +281,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				2234B4E52822C91A00B8CCB0 /* GameCell.swift in Sources */,
+				43949C492FFBB165009E11E5 /* Secrets.swift in Sources */,
 				4393834C2FFAE21E003ACC20 /* GameDetailViewController.swift in Sources */,
 				2234B4AC2822BF0100B8CCB0 /* AppDelegate.swift in Sources */,
 				2234B4DC2822C38200B8CCB0 /* TableViewController.swift in Sources */,
 				4393834E2FFAE2E2003ACC20 /* ScreenshotViewerController.swift in Sources */,
 				2234B4AE2822BF0100B8CCB0 /* SceneDelegate.swift in Sources */,
 				2234B4DF2822C46900B8CCB0 /* Games.swift in Sources */,
+				43949C4B2FFBB18F009E11E5 /* ReminderService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
