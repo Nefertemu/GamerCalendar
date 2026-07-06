@@ -1,8 +1,9 @@
 
 import UIKit
+import SafariServices
 
-/// Экран с подробной информацией об игре: обложка, описание,
-/// жанры, разработчики и скриншоты.
+/// Экран с подробной информацией об игре: обложка, трейлер, описание,
+/// жанры, разработчики, скриншоты, ссылки и похожие игры.
 class GameDetailViewController: UIViewController {
 
     private let game: GamesStorage
@@ -11,6 +12,7 @@ class GameDetailViewController: UIViewController {
     private let contentStack = UIStackView()
     private let spinner = UIActivityIndicatorView(style: .medium)
     private var screenshotURLs: [URL] = []
+    private var similarGames: [GamesStorage] = []
 
     init(game: GamesStorage, gameService: IGDBService) {
         self.game = game
@@ -151,6 +153,10 @@ class GameDetailViewController: UIViewController {
     private func showDetails(_ details: GameDetails) {
         addRating(details)
 
+        if let trailerURL = details.trailerURL {
+            addTrailerButton(trailerURL)
+        }
+
         if !details.about.isEmpty {
             addSection(header: String(localized: "About"), text: details.about)
         }
@@ -166,6 +172,146 @@ class GameDetailViewController: UIViewController {
         if !details.screenshots.isEmpty {
             addScreenshots(details.screenshots)
         }
+
+        if !details.links.isEmpty {
+            addLinks(details.links)
+        }
+
+        if !details.similarGames.isEmpty {
+            addSimilarGames(details.similarGames)
+        }
+    }
+
+    // MARK: - Трейлер и ссылки
+
+    private func addTrailerButton(_ url: URL) {
+        var config = UIButton.Configuration.borderedProminent()
+        config.title = String(localized: "Watch Trailer")
+        config.image = UIImage(systemName: "play.fill")
+        config.imagePadding = 8
+
+        let button = UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
+            self?.open(url)
+        })
+        addPadded(button)
+    }
+
+    private func addLinks(_ links: [GameLink]) {
+        let headerLabel = UILabel()
+        headerLabel.font = .systemFont(ofSize: 20, weight: .semibold)
+        headerLabel.text = String(localized: "Links")
+        addPadded(headerLabel)
+        contentStack.setCustomSpacing(8, after: headerLabel)
+
+        let buttons = links.map { link in
+            var config = UIButton.Configuration.bordered()
+            config.title = link.title
+            config.image = UIImage(systemName: "arrow.up.right.square")
+            config.imagePadding = 6
+
+            return UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
+                self?.open(link.url)
+            })
+        }
+
+        let linksStack = UIStackView(arrangedSubviews: buttons)
+        linksStack.axis = .horizontal
+        linksStack.spacing = 8
+        linksStack.layoutMargins = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        linksStack.isLayoutMarginsRelativeArrangement = true
+
+        let scrollView = UIScrollView()
+        scrollView.showsHorizontalScrollIndicator = false
+        linksStack.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.addSubview(linksStack)
+
+        NSLayoutConstraint.activate([
+            linksStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
+            linksStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
+            linksStack.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
+            linksStack.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
+            scrollView.heightAnchor.constraint(equalTo: linksStack.heightAnchor)
+        ])
+
+        contentStack.addArrangedSubview(scrollView)
+    }
+
+    private func open(_ url: URL) {
+        present(SFSafariViewController(url: url), animated: true)
+    }
+
+    // MARK: - Похожие игры
+
+    private func addSimilarGames(_ games: [GamesStorage]) {
+        similarGames = games
+
+        let headerLabel = UILabel()
+        headerLabel.font = .systemFont(ofSize: 20, weight: .semibold)
+        headerLabel.text = String(localized: "Similar Games")
+        addPadded(headerLabel)
+        contentStack.setCustomSpacing(8, after: headerLabel)
+
+        let cardsStack = UIStackView()
+        cardsStack.axis = .horizontal
+        cardsStack.alignment = .top
+        cardsStack.spacing = 12
+        cardsStack.layoutMargins = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        cardsStack.isLayoutMarginsRelativeArrangement = true
+
+        for (index, game) in games.enumerated() {
+            cardsStack.addArrangedSubview(makeSimilarGameCard(for: game, index: index))
+        }
+
+        let scrollView = UIScrollView()
+        scrollView.showsHorizontalScrollIndicator = false
+        cardsStack.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.addSubview(cardsStack)
+
+        NSLayoutConstraint.activate([
+            cardsStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
+            cardsStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
+            cardsStack.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
+            cardsStack.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
+            scrollView.heightAnchor.constraint(equalTo: cardsStack.heightAnchor)
+        ])
+
+        contentStack.addArrangedSubview(scrollView)
+    }
+
+    private func makeSimilarGameCard(for game: GamesStorage, index: Int) -> UIView {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        imageView.layer.cornerRadius = 12
+        imageView.backgroundColor = .secondarySystemFill
+        imageView.widthAnchor.constraint(equalToConstant: 200).isActive = true
+        imageView.heightAnchor.constraint(equalToConstant: 112).isActive = true
+        loadImage(from: game.imageURL, into: imageView)
+
+        let titleLabel = UILabel()
+        titleLabel.font = .systemFont(ofSize: 13, weight: .medium)
+        titleLabel.numberOfLines = 2
+        titleLabel.text = game.gameTitle
+
+        let card = UIStackView(arrangedSubviews: [imageView, titleLabel])
+        card.axis = .vertical
+        card.spacing = 6
+        card.widthAnchor.constraint(equalToConstant: 200).isActive = true
+
+        card.tag = index
+        card.isUserInteractionEnabled = true
+        card.addGestureRecognizer(
+            UITapGestureRecognizer(target: self, action: #selector(similarGameTapped(_:)))
+        )
+
+        return card
+    }
+
+    @objc private func similarGameTapped(_ gesture: UITapGestureRecognizer) {
+        guard let index = gesture.view?.tag, similarGames.indices.contains(index) else { return }
+
+        let detailViewController = GameDetailViewController(game: similarGames[index], gameService: gameService)
+        navigationController?.pushViewController(detailViewController, animated: true)
     }
 
     private func addRating(_ details: GameDetails) {

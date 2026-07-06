@@ -13,10 +13,33 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-        // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
-        // If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
-        // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
-        guard let _ = (scene as? UIWindowScene) else { return }
+        guard let windowScene = (scene as? UIWindowScene) else { return }
+
+        // Корень приложения — таб-бар: календарь релизов и отслеживаемые игры.
+        let calendarViewController = TableViewController()
+        calendarViewController.tabBarItem = UITabBarItem(
+            title: String(localized: "Calendar"),
+            image: UIImage(systemName: "calendar"),
+            tag: 0
+        )
+
+        let watchlistViewController = WatchlistViewController()
+        watchlistViewController.tabBarItem = UITabBarItem(
+            title: String(localized: "Watchlist"),
+            image: UIImage(systemName: "bell"),
+            tag: 1
+        )
+
+        let tabBarController = UITabBarController()
+        tabBarController.viewControllers = [
+            UINavigationController(rootViewController: calendarViewController),
+            UINavigationController(rootViewController: watchlistViewController)
+        ]
+
+        let window = UIWindow(windowScene: windowScene)
+        window.rootViewController = tabBarController
+        window.makeKeyAndVisible()
+        self.window = window
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {

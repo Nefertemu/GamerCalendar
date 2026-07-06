@@ -28,6 +28,15 @@ class TableViewController: UITableViewController {
         didSet { reloadFromScratch() }
     }
 
+    private enum SortOrder {
+        case releaseDate
+        case hype
+    }
+
+    private var sortOrder: SortOrder = .releaseDate {
+        didSet { reloadFromScratch() }
+    }
+
     private var searchQuery: String? {
         didSet { reloadFromScratch() }
     }
@@ -89,9 +98,28 @@ class TableViewController: UITableViewController {
             }
         }
 
+        let sortActions = [
+            UIAction(
+                title: String(localized: "By release date"),
+                state: sortOrder == .releaseDate ? .on : .off
+            ) { [weak self] _ in
+                self?.sortOrder = .releaseDate
+            },
+            UIAction(
+                title: String(localized: "Most anticipated"),
+                image: UIImage(systemName: "flame"),
+                state: sortOrder == .hype ? .on : .off
+            ) { [weak self] _ in
+                self?.sortOrder = .hype
+            }
+        ]
+
         let calendarButton = UIBarButtonItem(
             image: UIImage(systemName: "calendar"),
-            menu: UIMenu(title: String(localized: "Show games for"), children: yearActions)
+            menu: UIMenu(children: [
+                UIMenu(options: .displayInline, children: sortActions),
+                UIMenu(title: String(localized: "Show games for"), options: .displayInline, children: yearActions)
+            ])
         )
 
         let allPlatformsAction = UIAction(
@@ -152,7 +180,8 @@ class TableViewController: UITableViewController {
                     page: currentPage,
                     yearsAhead: yearsAhead,
                     search: searchQuery,
-                    platform: platformFilter
+                    platform: platformFilter,
+                    sortByHype: sortOrder == .hype
                 )
 
                 // Пока грузилась страница, пользователь мог сменить фильтры —
@@ -180,6 +209,16 @@ class TableViewController: UITableViewController {
     /// Раскладывает игры по секциям-месяцам. Игры приходят по возрастанию
     /// даты релиза, поэтому новый месяц всегда добавляется в конец.
     private func append(_ games: [GamesStorage]) {
+        // При сортировке по хайпу месяцы идут вразнобой — список плоский, без секций.
+        guard sortOrder == .releaseDate else {
+            if sections.isEmpty {
+                sections = [MonthSection(month: .distantPast, games: games)]
+            } else {
+                sections[0].games.append(contentsOf: games)
+            }
+            return
+        }
+
         let calendar = Calendar.current
         for game in games {
             guard let date = game.releaseDate else { continue }
@@ -246,7 +285,8 @@ class TableViewController: UITableViewController {
     }
 
     override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        monthFormatter.string(from: sections[section].month).capitalized
+        guard sortOrder == .releaseDate else { return nil }
+        return monthFormatter.string(from: sections[section].month).capitalized
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -284,6 +324,8 @@ class TableViewController: UITableViewController {
 
         if topOffset <= 8 || sections.isEmpty {
             title = String(localized: "Upcoming Games")
+        } else if sortOrder == .hype {
+            title = String(localized: "Most anticipated")
         } else if let topRow = tableView.indexPathsForVisibleRows?.first {
             title = monthFormatter.string(from: sections[topRow.section].month).capitalized
         }

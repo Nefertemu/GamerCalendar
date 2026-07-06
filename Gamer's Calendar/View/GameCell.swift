@@ -34,12 +34,25 @@ class GameCell: UITableViewCell {
         gameImageView.image = UIImage(systemName: "photo")
     }
 
-    func configure(with game: GamesStorage) {
+    func configure(with game: GamesStorage, showCountdown: Bool = false) {
         gameTitleLabel.text = game.gameTitle
-        releaseDateLabel.text = game.releaseDate?.formatted(date: .abbreviated, time: .omitted) ?? String(localized: "Unknown date")
+        releaseDateLabel.text = releaseDateText(for: game.releaseDate, showCountdown: showCountdown)
 
         showPlatformIcons(game.platformBadges)
         loadImage(from: game.imageURL)
+    }
+
+    private func releaseDateText(for releaseDate: Date?, showCountdown: Bool) -> String {
+        guard let releaseDate else { return String(localized: "Unknown date") }
+
+        let dateText = releaseDate.formatted(date: .abbreviated, time: .omitted)
+        guard showCountdown else { return dateText }
+
+        if releaseDate <= .now {
+            return "\(dateText) · \(String(localized: "Released!"))"
+        }
+        // «Через 3 дня» — системный форматтер, локализуется сам.
+        return "\(dateText) · \(releaseDate.formatted(.relative(presentation: .numeric)))"
     }
 
     /// Рисует иконки платформ внутри лейбла через NSTextAttachment.

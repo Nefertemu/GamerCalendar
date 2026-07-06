@@ -135,6 +135,26 @@
         }
       }
     },
+    "By release date" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "По дате выхода"
+          }
+        }
+      }
+    },
+    "Calendar" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Календарь"
+          }
+        }
+      }
+    },
     "Cancel" : {
       "localizations" : {
         "ru" : {
@@ -185,6 +205,26 @@
         }
       }
     },
+    "Links" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ссылки"
+          }
+        }
+      }
+    },
+    "Most anticipated" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Самые ожидаемые"
+          }
+        }
+      }
+    },
     "No games found" : {
       "localizations" : {
         "ru" : {
@@ -211,6 +251,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Уведомления выключены"
+          }
+        }
+      }
+    },
+    "Official Website" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Официальный сайт"
           }
         }
       }
@@ -265,6 +315,26 @@
         }
       }
     },
+    "Released!" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Уже вышла!"
+          }
+        }
+      }
+    },
+    "Remove" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Убрать"
+          }
+        }
+      }
+    },
     "Retry" : {
       "localizations" : {
         "ru" : {
@@ -305,6 +375,26 @@
         }
       }
     },
+    "Similar Games" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Похожие игры"
+          }
+        }
+      }
+    },
+    "Tap the bell on a game page to track its release" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нажмите на колокольчик на странице игры, чтобы следить за релизом"
+          }
+        }
+      }
+    },
     "Unknown date" : {
       "localizations" : {
         "ru" : {
@@ -321,6 +411,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Платформа неизвестна"
+          }
+        }
+      }
+    },
+    "Watch Trailer" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Смотреть трейлер"
+          }
+        }
+      }
+    },
+    "Watchlist" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Жду"
           }
         }
       }

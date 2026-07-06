@@ -1,7 +1,7 @@
 
 import UIKit
 
-struct GamesStorage {
+struct GamesStorage: Codable {
     let id: Int
     let gameTitle: String
     let imageURL: URL?
@@ -13,7 +13,7 @@ struct GamesStorage {
 }
 
 /// Платформа в виде иконки SF Symbols для ячейки списка.
-enum PlatformBadge: CaseIterable {
+enum PlatformBadge: String, Codable, CaseIterable {
     case pc
     case playstation
     case xbox
@@ -40,6 +40,17 @@ struct GameDetails {
     /// Средний рейтинг IGDB, приведённый к пятибалльной шкале.
     let rating: Double
     let ratingsCount: Int
+    /// Ссылка на трейлер в YouTube.
+    let trailerURL: URL?
+    /// Магазины и официальный сайт.
+    let links: [GameLink]
+    let similarGames: [GamesStorage]
+}
+
+/// Внешняя ссылка с экрана игры: магазин или официальный сайт.
+struct GameLink {
+    let title: String
+    let url: URL
 }
 
 /// Семейства платформ для фильтра списка.
@@ -129,6 +140,18 @@ struct IGDBGameDetail: Decodable {
     let screenshots: [IGDBImage]?
     let totalRating: Double?
     let totalRatingCount: Int?
+    let videos: [IGDBVideo]?
+    let websites: [IGDBWebsite]?
+    let similarGames: [IGDBGame]?
+}
+
+struct IGDBVideo: Decodable {
+    let videoId: String
+}
+
+struct IGDBWebsite: Decodable {
+    let url: String
+    let type: Int?
 }
 
 struct IGDBInvolvedCompany: Decodable {
@@ -166,7 +189,7 @@ final class IGDBService {
     private var accessToken: String?
     private var tokenExpiry = Date.distantPast
 
-    func fetchGames(page: Int = 1, yearsAhead: Int = 3, search: String? = nil, platform: PlatformFamily? = nil) async throws -> (games: [GamesStorage], hasMore: Bool) {
+    func fetchGames(page: Int = 1, yearsAhead: Int = 3, search: String? = nil, platform: PlatformFamily? = nil, sortByHype: Bool = false) async throws -> (games: [GamesStorage], hasMore: Bool) {
         let now = Date()
         let endDate = Calendar.current.date(byAdding: .year, value: yearsAhead, to: now) ?? now
 
@@ -188,11 +211,15 @@ final class IGDBService {
                 .replacingOccurrences(of: "\"", with: "\\\"")
             conditions.append("name ~ *\"\(escaped)\"*")
         }
+        if sortByHype {
+            // hypes — сколько человек добавили игру в ожидаемое на IGDB.
+            conditions.append("hypes != null")
+        }
 
         let query = """
         fields name, first_release_date, cover.image_id, screenshots.image_id, platforms.name, platforms.platform_family;
         where \(conditions.joined(separator: " & "));
-        sort first_release_date asc;
+        sort \(sortByHype ? "hypes desc" : "first_release_date asc");
         limit \(Self.pageSize);
         offset \((page - 1) * Self.pageSize);
         """
@@ -200,26 +227,27 @@ final class IGDBService {
         let data = try await requestData(endpoint: "games", query: query)
         let fetched = try decoder.decode([IGDBGame].self, from: data)
 
-        let games = fetched.map { game in
-            GamesStorage(
-                id: game.id,
-                gameTitle: game.name,
-                // Скриншот горизонтальный и лучше смотрится в списке и на обложке
-                // экрана деталей; портретная обложка — запасной вариант.
-                imageURL: imageURL(game.screenshots?.first, size: "t_screenshot_big")
-                    ?? imageURL(game.cover, size: "t_cover_big"),
-                releaseDate: game.firstReleaseDate.map { Date(timeIntervalSince1970: $0) },
-                platforms: game.platforms?.map(\.name).joined(separator: ", ") ?? "",
-                platformBadges: platformBadges(for: game.platforms)
-            )
-        }
+        return (fetched.map(gamesStorage(from:)), fetched.count == Self.pageSize)
+    }
 
-        return (games, fetched.count == Self.pageSize)
+    /// Приводит игру IGDB к модели приложения.
+    private func gamesStorage(from game: IGDBGame) -> GamesStorage {
+        GamesStorage(
+            id: game.id,
+            gameTitle: game.name,
+            // Скриншот горизонтальный и лучше смотрится в списке и на обложке
+            // экрана деталей; портретная обложка — запасной вариант.
+            imageURL: imageURL(game.screenshots?.first, size: "t_screenshot_big")
+                ?? imageURL(game.cover, size: "t_cover_big"),
+            releaseDate: game.firstReleaseDate.map { Date(timeIntervalSince1970: $0) },
+            platforms: game.platforms?.map(\.name).joined(separator: ", ") ?? "",
+            platformBadges: platformBadges(for: game.platforms)
+        )
     }
 
     func fetchGameDetails(id: Int) async throws -> GameDetails {
         let query = """
-        fields summary, genres.name, involved_companies.company.name, involved_companies.developer, screenshots.image_id, total_rating, total_rating_count;
+        fields summary, genres.name, involved_companies.company.name, involved_companies.developer, screenshots.image_id, total_rating, total_rating_count, videos.video_id, websites.url, websites.type, similar_games.name, similar_games.first_release_date, similar_games.cover.image_id, similar_games.screenshots.image_id, similar_games.platforms.name, similar_games.platforms.platform_family;
         where id = \(id);
         """
 
@@ -238,8 +266,30 @@ final class IGDBService {
             screenshots: detail.screenshots?.compactMap { imageURL($0, size: "t_screenshot_huge") } ?? [],
             // IGDB считает рейтинг по 100-балльной шкале, приложение показывает пятибалльную.
             rating: (detail.totalRating ?? 0) / 20,
-            ratingsCount: detail.totalRatingCount ?? 0
+            ratingsCount: detail.totalRatingCount ?? 0,
+            trailerURL: detail.videos?.first.flatMap { URL(string: "https://www.youtube.com/watch?v=\($0.videoId)") },
+            links: links(from: detail.websites),
+            similarGames: detail.similarGames?.map(gamesStorage(from:)) ?? []
         )
+    }
+
+    /// Отбирает магазины и официальный сайт из ссылок IGDB (websites.type).
+    private func links(from websites: [IGDBWebsite]?) -> [GameLink] {
+        let knownTypes: [(type: Int, title: String)] = [
+            (13, "Steam"),
+            (23, "PlayStation Store"),
+            (22, "Xbox Store"),
+            (24, "Nintendo eShop"),
+            (16, "Epic Games"),
+            (17, "GOG"),
+            (1, String(localized: "Official Website"))
+        ]
+
+        return knownTypes.compactMap { known in
+            guard let site = websites?.first(where: { $0.type == known.type }),
+                  let url = URL(string: site.url) else { return nil }
+            return GameLink(title: known.title, url: url)
+        }
     }
 
     // MARK: - Запросы и авторизация

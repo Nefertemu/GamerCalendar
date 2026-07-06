@@ -2,24 +2,36 @@
 import Foundation
 import UserNotifications
 
-/// Напоминания о выходе игр: локальное уведомление утром в день релиза.
-/// Список игр с включённым напоминанием хранится в UserDefaults.
+/// Отслеживаемые игры: локальное уведомление утром в день релиза
+/// плюс сохранённый снимок игры для вкладки «Жду».
 final class ReminderService {
 
     static let shared = ReminderService()
 
     private let defaults = UserDefaults.standard
-    private let storageKey = "remindedGameIDs"
+    private let storageKey = "trackedGames"
 
     private init() {}
 
-    private var remindedIDs: Set<Int> {
-        get { Set(defaults.array(forKey: storageKey) as? [Int] ?? []) }
-        set { defaults.set(Array(newValue), forKey: storageKey) }
+    /// Игры с включённым напоминанием, отсортированные по дате релиза.
+    private(set) var trackedGames: [GamesStorage] {
+        get {
+            guard let data = defaults.data(forKey: storageKey),
+                  let games = try? JSONDecoder().decode([GamesStorage].self, from: data) else {
+                return []
+            }
+            return games
+        }
+        set {
+            let sorted = newValue.sorted {
+                ($0.releaseDate ?? .distantFuture) < ($1.releaseDate ?? .distantFuture)
+            }
+            defaults.set(try? JSONEncoder().encode(sorted), forKey: storageKey)
+        }
     }
 
     func hasReminder(for gameID: Int) -> Bool {
-        remindedIDs.contains(gameID)
+        trackedGames.contains { $0.id == gameID }
     }
 
     /// Включает напоминание. Возвращает false, если пользователь
@@ -46,14 +58,14 @@ final class ReminderService {
         )
         try? await center.add(request)
 
-        remindedIDs.insert(game.id)
+        trackedGames = trackedGames.filter { $0.id != game.id } + [game]
         return true
     }
 
     func removeReminder(for gameID: Int) {
         UNUserNotificationCenter.current()
             .removePendingNotificationRequests(withIdentifiers: [notificationID(for: gameID)])
-        remindedIDs.remove(gameID)
+        trackedGames = trackedGames.filter { $0.id != gameID }
     }
 
     private func notificationID(for gameID: Int) -> String {
