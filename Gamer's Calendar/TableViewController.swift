@@ -10,7 +10,7 @@ class TableViewController: UITableViewController {
     }
 
     private var sections: [MonthSection] = []
-    private let rawgService = RawgService()
+    private let gameService = IGDBService()
 
     private var currentPage = 1
     private var hasMorePages = true
@@ -24,24 +24,7 @@ class TableViewController: UITableViewController {
         didSet { reloadFromScratch() }
     }
 
-    /// Родительские платформы RAWG: rawValue — id для параметра parent_platforms.
-    private enum PlatformFilter: Int, CaseIterable {
-        case pc = 1
-        case playstation = 2
-        case xbox = 3
-        case nintendo = 7
-
-        var title: String {
-            switch self {
-            case .pc: return "PC"
-            case .playstation: return "PlayStation"
-            case .xbox: return "Xbox"
-            case .nintendo: return "Nintendo"
-            }
-        }
-    }
-
-    private var platformFilter: PlatformFilter? {
+    private var platformFilter: PlatformFamily? {
         didSet { reloadFromScratch() }
     }
 
@@ -117,7 +100,7 @@ class TableViewController: UITableViewController {
         ) { [weak self] _ in
             self?.platformFilter = nil
         }
-        let platformActions = [allPlatformsAction] + PlatformFilter.allCases.map { platform in
+        let platformActions = [allPlatformsAction] + PlatformFamily.allCases.map { platform in
             UIAction(
                 title: platform.title,
                 state: platform == platformFilter ? .on : .off
@@ -153,6 +136,7 @@ class TableViewController: UITableViewController {
         tableView.backgroundView = nil
         tableView.reloadData()
         updateMenus()
+        updateNavigationTitle()
         loadNextPage()
     }
 
@@ -164,11 +148,11 @@ class TableViewController: UITableViewController {
 
         Task {
             do {
-                let (fetched, hasMore) = try await rawgService.fetchGames(
+                let (fetched, hasMore) = try await gameService.fetchGames(
                     page: currentPage,
                     yearsAhead: yearsAhead,
                     search: searchQuery,
-                    parentPlatform: platformFilter?.rawValue
+                    platform: platformFilter
                 )
 
                 // Пока грузилась страница, пользователь мог сменить фильтры —
@@ -275,7 +259,7 @@ class TableViewController: UITableViewController {
         tableView.deselectRow(at: indexPath, animated: true)
 
         let game = sections[indexPath.section].games[indexPath.row]
-        let detailViewController = GameDetailViewController(game: game, rawgService: rawgService)
+        let detailViewController = GameDetailViewController(game: game, gameService: gameService)
         navigationController?.pushViewController(detailViewController, animated: true)
     }
 
@@ -284,6 +268,24 @@ class TableViewController: UITableViewController {
         guard indexPath.section == sections.count - 1 else { return }
         if indexPath.row >= sections[indexPath.section].games.count - 5 {
             loadNextPage()
+        }
+    }
+
+    // MARK: - Заголовок с текущим месяцем
+
+    override func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        updateNavigationTitle()
+    }
+
+    /// В самом верху списка — название экрана, при пролистывании
+    /// заголовок показывает месяц верхней видимой игры.
+    private func updateNavigationTitle() {
+        let topOffset = tableView.contentOffset.y + tableView.adjustedContentInset.top
+
+        if topOffset <= 8 || sections.isEmpty {
+            title = String(localized: "Upcoming Games")
+        } else if let topRow = tableView.indexPathsForVisibleRows?.first {
+            title = monthFormatter.string(from: sections[topRow.section].month).capitalized
         }
     }
 

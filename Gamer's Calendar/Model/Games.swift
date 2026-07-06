@@ -6,7 +6,29 @@ struct GamesStorage {
     let gameTitle: String
     let imageURL: URL?
     let releaseDate: Date?
+    /// Полные названия платформ для экрана деталей.
     let platforms: String
+    /// Иконки платформ для ячейки списка.
+    let platformBadges: [PlatformBadge]
+}
+
+/// Платформа в виде иконки SF Symbols для ячейки списка.
+enum PlatformBadge: CaseIterable {
+    case pc
+    case playstation
+    case xbox
+    case nintendo
+    case mobile
+
+    var symbolName: String {
+        switch self {
+        case .pc: return "desktopcomputer"
+        case .playstation: return "playstation.logo"
+        case .xbox: return "xbox.logo"
+        case .nintendo: return "gamecontroller"
+        case .mobile: return "iphone"
+        }
+    }
 }
 
 /// Подробности об игре с экрана деталей: описание, жанры, разработчики, скриншоты.
@@ -15,9 +37,37 @@ struct GameDetails {
     let genres: String
     let developers: String
     let screenshots: [URL]
-    /// Средний рейтинг RAWG по пятибалльной шкале.
+    /// Средний рейтинг IGDB, приведённый к пятибалльной шкале.
     let rating: Double
     let ratingsCount: Int
+}
+
+/// Семейства платформ для фильтра списка.
+enum PlatformFamily: CaseIterable {
+    case pc
+    case playstation
+    case xbox
+    case nintendo
+
+    var title: String {
+        switch self {
+        case .pc: return "PC"
+        case .playstation: return "PlayStation"
+        case .xbox: return "Xbox"
+        case .nintendo: return "Nintendo"
+        }
+    }
+
+    /// Условие для where-фильтра IGDB. PC — конкретная платформа (id 6),
+    /// консоли — семейства платформ (platform_family).
+    fileprivate var igdbCondition: String {
+        switch self {
+        case .pc: return "platforms = (6)"
+        case .playstation: return "platforms.platform_family = 1"
+        case .xbox: return "platforms.platform_family = 2"
+        case .nintendo: return "platforms.platform_family = 5"
+        }
+    }
 }
 
 /// Простой кэш загруженных обложек, чтобы не тянуть одну и ту же картинку
@@ -55,143 +105,208 @@ final class ImageCache {
     }
 }
 
-struct RawgGamesResponse: Decodable {
-    let next: String?
-    let results: [RawgGame]
-}
+// MARK: - Ответы IGDB
 
-struct RawgGame: Decodable {
+struct IGDBGame: Decodable {
     let id: Int
     let name: String
-    let released: String?
-    let backgroundImage: URL?
-    let platforms: [RawgPlatformWrapper]?
-
-    enum CodingKeys: String, CodingKey {
-        case id
-        case name
-        case released
-        case backgroundImage = "background_image"
-        case platforms
-    }
+    let firstReleaseDate: TimeInterval?
+    let cover: IGDBImage?
+    let screenshots: [IGDBImage]?
+    let platforms: [IGDBPlatform]?
 }
 
-struct RawgPlatformWrapper: Decodable {
-    let platform: RawgPlatform
+struct IGDBPlatform: Decodable {
+    let id: Int
+    let name: String
+    let platformFamily: Int?
 }
 
-struct RawgPlatform: Decodable {
+struct IGDBGameDetail: Decodable {
+    let summary: String?
+    let genres: [IGDBNamed]?
+    let involvedCompanies: [IGDBInvolvedCompany]?
+    let screenshots: [IGDBImage]?
+    let totalRating: Double?
+    let totalRatingCount: Int?
+}
+
+struct IGDBInvolvedCompany: Decodable {
+    let company: IGDBNamed
+    let developer: Bool
+}
+
+struct IGDBImage: Decodable {
+    let imageId: String
+}
+
+struct IGDBNamed: Decodable {
     let name: String
 }
 
-struct RawgGameDetailResponse: Decodable {
-    let descriptionRaw: String?
-    let genres: [RawgNamed]?
-    let developers: [RawgNamed]?
-    let rating: Double?
-    let ratingsCount: Int?
-
-    enum CodingKeys: String, CodingKey {
-        case descriptionRaw = "description_raw"
-        case genres
-        case developers
-        case rating
-        case ratingsCount = "ratings_count"
-    }
+struct TwitchToken: Decodable {
+    let accessToken: String
+    let expiresIn: TimeInterval
 }
 
-struct RawgNamed: Decodable {
-    let name: String
-}
+// MARK: - Сервис IGDB
 
-struct RawgScreenshotsResponse: Decodable {
-    let results: [RawgScreenshot]
-}
+final class IGDBService {
 
-struct RawgScreenshot: Decodable {
-    let image: URL
-}
-
-final class RawgService {
-    private let apiKey = Secrets.rawgAPIKey
-
-    /// Максимальный размер страницы, разрешённый RAWG API.
+    /// Максимум записей на страницу (IGDB разрешает до 500).
     static let pageSize = 40
 
-    func fetchGames(page: Int = 1, yearsAhead: Int = 3, search: String? = nil, parentPlatform: Int? = nil) async throws -> (games: [GamesStorage], hasMore: Bool) {
-        let dateFormatter = DateFormatter()
-        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-        dateFormatter.dateFormat = "yyyy-MM-dd"
+    private let decoder: JSONDecoder = {
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return decoder
+    }()
 
-        let today = Date()
-        let endDate = Calendar.current.date(byAdding: .year, value: yearsAhead, to: today) ?? today
-        let datesRange = "\(dateFormatter.string(from: today)),\(dateFormatter.string(from: endDate))"
+    /// Токен Twitch OAuth; живёт около двух месяцев и обновляется автоматически.
+    private var accessToken: String?
+    private var tokenExpiry = Date.distantPast
 
-        var components = URLComponents(string: "https://api.rawg.io/api/games")!
-        components.queryItems = [
-            URLQueryItem(name: "key", value: apiKey),
-            URLQueryItem(name: "page", value: String(page)),
-            URLQueryItem(name: "page_size", value: String(Self.pageSize)),
-            URLQueryItem(name: "dates", value: datesRange),
-            URLQueryItem(name: "ordering", value: "released")
+    func fetchGames(page: Int = 1, yearsAhead: Int = 3, search: String? = nil, platform: PlatformFamily? = nil) async throws -> (games: [GamesStorage], hasMore: Bool) {
+        let now = Date()
+        let endDate = Calendar.current.date(byAdding: .year, value: yearsAhead, to: now) ?? now
+
+        // Основные игры, самостоятельные дополнения, ремейки, ремастеры,
+        // расширенные издания и порты — но не DLC, эпизоды и сезоны.
+        var conditions = [
+            "first_release_date > \(Int(now.timeIntervalSince1970))",
+            "first_release_date < \(Int(endDate.timeIntervalSince1970))",
+            "game_type = (0,4,8,9,10,11)"
         ]
-
+        if let platform {
+            conditions.append(platform.igdbCondition)
+        }
         if let search {
-            components.queryItems?.append(URLQueryItem(name: "search", value: search))
+            // Поиск через `name ~ *"..."*`, а не `search`: search в IGDB
+            // несовместим с sort, а список должен оставаться отсортированным по дате.
+            let escaped = search
+                .replacingOccurrences(of: "\\", with: "")
+                .replacingOccurrences(of: "\"", with: "\\\"")
+            conditions.append("name ~ *\"\(escaped)\"*")
         }
-        if let parentPlatform {
-            components.queryItems?.append(URLQueryItem(name: "parent_platforms", value: String(parentPlatform)))
-        }
 
-        let url = components.url!
-        let (data, _) = try await URLSession.shared.data(from: url)
+        let query = """
+        fields name, first_release_date, cover.image_id, screenshots.image_id, platforms.name, platforms.platform_family;
+        where \(conditions.joined(separator: " & "));
+        sort first_release_date asc;
+        limit \(Self.pageSize);
+        offset \((page - 1) * Self.pageSize);
+        """
 
-        let response = try JSONDecoder().decode(RawgGamesResponse.self, from: data)
+        let data = try await requestData(endpoint: "games", query: query)
+        let fetched = try decoder.decode([IGDBGame].self, from: data)
 
-        let games = response.results.compactMap { game -> GamesStorage? in
-            guard let released = game.released,
-                  let releaseDate = dateFormatter.date(from: released) else {
-                return nil
-            }
-
-            return GamesStorage(
+        let games = fetched.map { game in
+            GamesStorage(
                 id: game.id,
                 gameTitle: game.name,
-                imageURL: game.backgroundImage,
-                releaseDate: releaseDate,
-                platforms: game.platforms?
-                    .map { $0.platform.name }
-                    .joined(separator: ", ") ?? ""
+                // Скриншот горизонтальный и лучше смотрится в списке и на обложке
+                // экрана деталей; портретная обложка — запасной вариант.
+                imageURL: imageURL(game.screenshots?.first, size: "t_screenshot_big")
+                    ?? imageURL(game.cover, size: "t_cover_big"),
+                releaseDate: game.firstReleaseDate.map { Date(timeIntervalSince1970: $0) },
+                platforms: game.platforms?.map(\.name).joined(separator: ", ") ?? "",
+                platformBadges: platformBadges(for: game.platforms)
             )
         }
 
-        return (games, response.next != nil)
+        return (games, fetched.count == Self.pageSize)
     }
 
     func fetchGameDetails(id: Int) async throws -> GameDetails {
-        // Описание и скриншоты — разные эндпоинты, грузим параллельно.
-        async let detailData = URLSession.shared.data(from: endpointURL(path: "games/\(id)"))
-        async let screenshotsData = URLSession.shared.data(from: endpointURL(path: "games/\(id)/screenshots"))
+        let query = """
+        fields summary, genres.name, involved_companies.company.name, involved_companies.developer, screenshots.image_id, total_rating, total_rating_count;
+        where id = \(id);
+        """
 
-        let detail = try JSONDecoder().decode(RawgGameDetailResponse.self, from: await detailData.0)
-
-        // Скриншоты не критичны: если их не удалось загрузить, показываем остальное.
-        let screenshots = (try? JSONDecoder().decode(RawgScreenshotsResponse.self, from: await screenshotsData.0))?
-            .results.map(\.image) ?? []
+        let data = try await requestData(endpoint: "games", query: query)
+        guard let detail = try decoder.decode([IGDBGameDetail].self, from: data).first else {
+            throw URLError(.resourceUnavailable)
+        }
 
         return GameDetails(
-            about: detail.descriptionRaw ?? "",
+            about: detail.summary ?? "",
             genres: detail.genres?.map(\.name).joined(separator: ", ") ?? "",
-            developers: detail.developers?.map(\.name).joined(separator: ", ") ?? "",
-            screenshots: screenshots,
-            rating: detail.rating ?? 0,
-            ratingsCount: detail.ratingsCount ?? 0
+            developers: detail.involvedCompanies?
+                .filter(\.developer)
+                .map(\.company.name)
+                .joined(separator: ", ") ?? "",
+            screenshots: detail.screenshots?.compactMap { imageURL($0, size: "t_screenshot_huge") } ?? [],
+            // IGDB считает рейтинг по 100-балльной шкале, приложение показывает пятибалльную.
+            rating: (detail.totalRating ?? 0) / 20,
+            ratingsCount: detail.totalRatingCount ?? 0
         )
     }
 
-    private func endpointURL(path: String) -> URL {
-        var components = URLComponents(string: "https://api.rawg.io/api/\(path)")!
-        components.queryItems = [URLQueryItem(name: "key", value: apiKey)]
-        return components.url!
+    // MARK: - Запросы и авторизация
+
+    private func requestData(endpoint: String, query: String) async throws -> Data {
+        let token = try await validToken()
+
+        var request = URLRequest(url: URL(string: "https://api.igdb.com/v4/\(endpoint)")!)
+        request.httpMethod = "POST"
+        request.setValue(Secrets.igdbClientID, forHTTPHeaderField: "Client-ID")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.httpBody = query.data(using: .utf8)
+
+        let (data, _) = try await URLSession.shared.data(for: request)
+        return data
     }
+
+    private func validToken() async throws -> String {
+        if let accessToken, tokenExpiry > Date() {
+            return accessToken
+        }
+
+        var components = URLComponents(string: "https://id.twitch.tv/oauth2/token")!
+        components.queryItems = [
+            URLQueryItem(name: "client_id", value: Secrets.igdbClientID),
+            URLQueryItem(name: "client_secret", value: Secrets.igdbClientSecret),
+            URLQueryItem(name: "grant_type", value: "client_credentials")
+        ]
+
+        var request = URLRequest(url: components.url!)
+        request.httpMethod = "POST"
+
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let token = try decoder.decode(TwitchToken.self, from: data)
+
+        accessToken = token.accessToken
+        // Обновляем токен на минуту раньше срока, чтобы не поймать 401 на границе.
+        tokenExpiry = Date().addingTimeInterval(token.expiresIn - 60)
+        return token.accessToken
+    }
+
+    /// Сводит конкретные платформы IGDB к иконкам: консоли — по семейству
+    /// (1 PlayStation, 2 Xbox, 5 Nintendo, 4 Linux), остальные — по id платформы.
+    private func platformBadges(for platforms: [IGDBPlatform]?) -> [PlatformBadge] {
+        var badges = Set<PlatformBadge>()
+
+        for platform in platforms ?? [] {
+            switch platform.platformFamily {
+            case 1: badges.insert(.playstation)
+            case 2: badges.insert(.xbox)
+            case 5: badges.insert(.nintendo)
+            case 4: badges.insert(.pc)
+            default:
+                switch platform.id {
+                case 6, 14, 3: badges.insert(.pc)      // Windows, Mac, Linux
+                case 34, 39: badges.insert(.mobile)    // Android, iOS
+                default: break
+                }
+            }
+        }
+
+        return PlatformBadge.allCases.filter(badges.contains)
+    }
+
+    private func imageURL(_ image: IGDBImage?, size: String) -> URL? {
+        guard let image else { return nil }
+        return URL(string: "https://images.igdb.com/igdb/image/upload/\(size)/\(image.imageId).jpg")
+    }
+
 }

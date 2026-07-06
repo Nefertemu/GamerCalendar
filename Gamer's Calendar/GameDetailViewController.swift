@@ -6,15 +6,15 @@ import UIKit
 class GameDetailViewController: UIViewController {
 
     private let game: GamesStorage
-    private let rawgService: RawgService
+    private let gameService: IGDBService
 
     private let contentStack = UIStackView()
     private let spinner = UIActivityIndicatorView(style: .medium)
     private var screenshotURLs: [URL] = []
 
-    init(game: GamesStorage, rawgService: RawgService) {
+    init(game: GamesStorage, gameService: IGDBService) {
         self.game = game
-        self.rawgService = rawgService
+        self.gameService = gameService
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -137,7 +137,7 @@ class GameDetailViewController: UIViewController {
     private func loadDetails() {
         Task {
             do {
-                let details = try await rawgService.fetchGameDetails(id: game.id)
+                let details = try await gameService.fetchGameDetails(id: game.id)
                 spinner.removeFromSuperview()
                 showDetails(details)
             } catch {

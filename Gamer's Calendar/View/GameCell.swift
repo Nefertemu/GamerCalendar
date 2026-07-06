@@ -36,10 +36,37 @@ class GameCell: UITableViewCell {
 
     func configure(with game: GamesStorage) {
         gameTitleLabel.text = game.gameTitle
-        platformsLabel.text = game.platforms.isEmpty ? String(localized: "Unknown platform") : game.platforms
         releaseDateLabel.text = game.releaseDate?.formatted(date: .abbreviated, time: .omitted) ?? String(localized: "Unknown date")
 
+        showPlatformIcons(game.platformBadges)
         loadImage(from: game.imageURL)
+    }
+
+    /// Рисует иконки платформ внутри лейбла через NSTextAttachment.
+    private func showPlatformIcons(_ badges: [PlatformBadge]) {
+        guard !badges.isEmpty else {
+            platformsLabel.text = String(localized: "Unknown platform")
+            return
+        }
+
+        let config = UIImage.SymbolConfiguration(pointSize: platformsLabel.font.pointSize, weight: .regular)
+        let text = NSMutableAttributedString()
+
+        for (index, badge) in badges.enumerated() {
+            // Фирменные логотипы появились не во всех версиях iOS —
+            // на старых системах показываем нейтральный геймпад.
+            let image = UIImage(systemName: badge.symbolName, withConfiguration: config)
+                ?? UIImage(systemName: "gamecontroller", withConfiguration: config)
+            let attachment = NSTextAttachment()
+            attachment.image = image?.withTintColor(.secondaryLabel, renderingMode: .alwaysOriginal)
+            text.append(NSAttributedString(attachment: attachment))
+
+            if index < badges.count - 1 {
+                text.append(NSAttributedString(string: "  "))
+            }
+        }
+
+        platformsLabel.attributedText = text
     }
 
     private func loadImage(from url: URL?) {
