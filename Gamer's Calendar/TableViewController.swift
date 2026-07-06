@@ -19,13 +19,23 @@ class TableViewController: UITableViewController {
     /// Растёт при каждом сбросе списка; ответы устаревших запросов отбрасываются.
     private var loadGeneration = 0
 
-    private let yearOptions = [1, 2, 3, 5]
-    private var yearsAhead = 3 {
-        didSet { reloadFromScratch() }
+    /// Диапазоны «показывать игры на …» в месяцах.
+    private let windowOptions = [3, 6, 12, 24, 36, 60]
+
+    /// Выбранный диапазон; переживает перезапуск приложения.
+    private var monthsAhead = UserDefaults.standard.object(forKey: "filter.monthsAhead") as? Int ?? 36 {
+        didSet {
+            UserDefaults.standard.set(monthsAhead, forKey: "filter.monthsAhead")
+            reloadFromScratch()
+        }
     }
 
-    private var platformFilter: PlatformFamily? {
-        didSet { reloadFromScratch() }
+    /// Выбранная платформа; переживает перезапуск приложения.
+    private var platformFilter = PlatformFamily(rawValue: UserDefaults.standard.string(forKey: "filter.platform") ?? "") {
+        didSet {
+            UserDefaults.standard.set(platformFilter?.rawValue, forKey: "filter.platform")
+            reloadFromScratch()
+        }
     }
 
     private enum SortOrder {
@@ -51,10 +61,12 @@ class TableViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        title = String(localized: "Upcoming Games")
+        // Меняем только заголовок навбара: self.title перетёр бы подпись таба.
+        navigationItem.title = String(localized: "Upcoming Games")
         navigationController?.navigationBar.prefersLargeTitles = true
 
         tableView.rowHeight = 112
+        tableView.backgroundColor = .systemBackground
 
         let cellTypeNib = UINib(nibName: "GameCell", bundle: nil)
         tableView.register(cellTypeNib, forCellReuseIdentifier: "GameCell")
@@ -97,12 +109,12 @@ class TableViewController: UITableViewController {
     // MARK: - Меню диапазона и платформ
 
     private func updateMenus() {
-        let yearActions = yearOptions.map { years in
+        let windowActions = windowOptions.map { months in
             UIAction(
-                title: yearsTitle(for: years),
-                state: years == yearsAhead ? .on : .off
+                title: windowTitle(forMonths: months),
+                state: months == monthsAhead ? .on : .off
             ) { [weak self] _ in
-                self?.yearsAhead = years
+                self?.monthsAhead = months
             }
         }
 
@@ -126,7 +138,7 @@ class TableViewController: UITableViewController {
             image: UIImage(systemName: "calendar"),
             menu: UIMenu(children: [
                 UIMenu(options: .displayInline, children: sortActions),
-                UIMenu(title: String(localized: "Show games for"), options: .displayInline, children: yearActions)
+                UIMenu(title: String(localized: "Show games for"), options: .displayInline, children: windowActions)
             ])
         )
 
@@ -156,9 +168,12 @@ class TableViewController: UITableViewController {
         navigationItem.rightBarButtonItems = [calendarButton, filterButton]
     }
 
-    private func yearsTitle(for years: Int) -> String {
+    private func windowTitle(forMonths months: Int) -> String {
         // Формы множественного числа берутся из каталога строк (Localizable.xcstrings).
-        String(localized: "\(years) years")
+        if months < 12 {
+            return String(localized: "\(months) months")
+        }
+        return String(localized: "\(months / 12) years")
     }
 
     // MARK: - Загрузка
@@ -186,7 +201,7 @@ class TableViewController: UITableViewController {
             do {
                 let (fetched, hasMore) = try await gameService.fetchGames(
                     page: currentPage,
-                    yearsAhead: yearsAhead,
+                    monthsAhead: monthsAhead,
                     search: searchQuery,
                     platform: platformFilter,
                     sortByHype: sortOrder == .hype
@@ -303,7 +318,7 @@ class TableViewController: UITableViewController {
 
     override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         guard sortOrder == .releaseDate else { return nil }
-        return monthFormatter.string(from: sections[section].month).capitalized
+        return monthTitle(for: sections[section].month)
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -340,12 +355,18 @@ class TableViewController: UITableViewController {
         let topOffset = tableView.contentOffset.y + tableView.adjustedContentInset.top
 
         if topOffset <= 8 || sections.isEmpty {
-            title = String(localized: "Upcoming Games")
+            navigationItem.title = String(localized: "Upcoming Games")
         } else if sortOrder == .hype {
-            title = String(localized: "Most anticipated")
+            navigationItem.title = String(localized: "Most anticipated")
         } else if let topRow = tableView.indexPathsForVisibleRows?.first {
-            title = monthFormatter.string(from: sections[topRow.section].month).capitalized
+            navigationItem.title = monthTitle(for: sections[topRow.section].month)
         }
+    }
+
+    private func monthTitle(for month: Date) -> String {
+        // Заглавная только первая буква: .capitalized сделал бы «Июль 2026 Г.»
+        let raw = monthFormatter.string(from: month)
+        return raw.prefix(1).uppercased() + raw.dropFirst()
     }
 
 }

@@ -16,7 +16,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = (scene as? UIWindowScene) else { return }
 
         // Корень приложения — таб-бар: календарь релизов и отслеживаемые игры.
-        let calendarViewController = TableViewController()
+        // Grouped-стиль: заголовки месяцев не прилипают к навбару при скролле.
+        let calendarViewController = TableViewController(style: .grouped)
         calendarViewController.tabBarItem = UITabBarItem(
             title: String(localized: "Calendar"),
             image: UIImage(systemName: "calendar"),

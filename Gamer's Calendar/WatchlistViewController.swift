@@ -14,7 +14,8 @@ class WatchlistViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        title = String(localized: "Watchlist")
+        // Меняем только заголовок навбара: self.title перетёр бы подпись таба.
+        navigationItem.title = String(localized: "Watchlist")
         navigationController?.navigationBar.prefersLargeTitles = true
 
         tableView.rowHeight = 112

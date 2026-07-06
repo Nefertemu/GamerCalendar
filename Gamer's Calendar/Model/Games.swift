@@ -53,8 +53,8 @@ struct GameLink {
     let url: URL
 }
 
-/// Семейства платформ для фильтра списка.
-enum PlatformFamily: CaseIterable {
+/// Семейства платформ для фильтра списка. Raw value хранится в UserDefaults.
+enum PlatformFamily: String, CaseIterable {
     case pc
     case playstation
     case xbox
@@ -212,9 +212,9 @@ final class IGDBService {
     private var accessToken: String?
     private var tokenExpiry = Date.distantPast
 
-    func fetchGames(page: Int = 1, yearsAhead: Int = 3, search: String? = nil, platform: PlatformFamily? = nil, sortByHype: Bool = false) async throws -> (games: [GamesStorage], hasMore: Bool) {
+    func fetchGames(page: Int = 1, monthsAhead: Int = 36, search: String? = nil, platform: PlatformFamily? = nil, sortByHype: Bool = false) async throws -> (games: [GamesStorage], hasMore: Bool) {
         let now = Date()
-        let endDate = Calendar.current.date(byAdding: .year, value: yearsAhead, to: now) ?? now
+        let endDate = Calendar.current.date(byAdding: .month, value: monthsAhead, to: now) ?? now
 
         // Основные игры, самостоятельные дополнения, ремейки, ремастеры,
         // расширенные издания и порты — но не DLC, эпизоды и сезоны.
