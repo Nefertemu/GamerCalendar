@@ -1,0 +1,14 @@
+# Пользовательские настройки Xcode (положение окон, схемы, брейкпоинты)
+xcuserdata/
+*.xcuserstate
+
+# Артефакты сборки
+build/
+DerivedData/
+
+# Swift Package Manager
+.swiftpm/
+.build/
+
+# macOS
+.DS_Store
