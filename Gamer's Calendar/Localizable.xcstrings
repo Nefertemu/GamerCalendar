@@ -247,6 +247,56 @@
         }
       }
     },
+    "Check your Lock Screen and Dynamic Island." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Смотрите на экране блокировки и в Dynamic Island."
+          }
+        }
+      }
+    },
+    "Countdown started" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отсчёт запущен"
+          }
+        }
+      }
+    },
+    "Couldn't start countdown" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось запустить отсчёт"
+          }
+        }
+      }
+    },
+    "Feed" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Лента"
+          }
+        }
+      }
+    },
+    "Franchise: %@" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Франшиза: %@"
+          }
+        }
+      }
+    },
     "Genres" : {
       "localizations" : {
         "ru" : {
@@ -283,6 +333,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Новая дата!"
+          }
+        }
+      }
+    },
+    "Live Activities are disabled in Settings." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live Activities выключены в настройках."
           }
         }
       }
@@ -453,6 +513,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Нажмите на колокольчик на странице игры, чтобы следить за релизом"
+          }
+        }
+      }
+    },
+    "This week's releases" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Релизы этой недели"
           }
         }
       }

@@ -1,6 +1,72 @@
 
 import WidgetKit
 import SwiftUI
+import ActivityKit
+
+// MARK: - Live Activity: отсчёт до релиза
+
+/// Копия атрибутов из основного приложения (Model/ReleaseCountdown.swift):
+/// система сопоставляет активности по имени типа.
+struct ReleaseActivityAttributes: ActivityAttributes {
+    struct ContentState: Codable, Hashable {}
+
+    let gameTitle: String
+    let releaseDate: Date
+}
+
+@available(iOS 16.2, *)
+struct ReleaseLiveActivity: Widget {
+    var body: some WidgetConfiguration {
+        ActivityConfiguration(for: ReleaseActivityAttributes.self) { context in
+            // Баннер на экране блокировки.
+            HStack(spacing: 12) {
+                Image(systemName: "gamecontroller.fill")
+                    .font(.title2)
+                    .foregroundStyle(.orange)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(context.attributes.gameTitle)
+                        .font(.headline)
+                        .lineLimit(1)
+                    Text(context.attributes.releaseDate, style: .relative)
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.orange)
+                }
+                Spacer()
+            }
+            .padding()
+            .foregroundStyle(.white)
+            .activityBackgroundTint(Color(red: 0.07, green: 0.08, blue: 0.22))
+        } dynamicIsland: { context in
+            DynamicIsland {
+                DynamicIslandExpandedRegion(.leading) {
+                    Image(systemName: "gamecontroller.fill")
+                        .foregroundStyle(.orange)
+                }
+                DynamicIslandExpandedRegion(.center) {
+                    Text(context.attributes.gameTitle)
+                        .font(.headline)
+                        .lineLimit(1)
+                }
+                DynamicIslandExpandedRegion(.bottom) {
+                    Text(context.attributes.releaseDate, style: .relative)
+                        .font(.title3.bold())
+                        .foregroundStyle(.orange)
+                }
+            } compactLeading: {
+                Image(systemName: "gamecontroller.fill")
+                    .foregroundStyle(.orange)
+            } compactTrailing: {
+                Text(context.attributes.releaseDate, style: .timer)
+                    .frame(maxWidth: 60)
+                    .foregroundStyle(.orange)
+                    .monospacedDigit()
+            } minimal: {
+                Image(systemName: "gamecontroller.fill")
+                    .foregroundStyle(.orange)
+            }
+        }
+    }
+}
 
 /// Снимок игры из общего хранилища (App Group), которое пишет приложение.
 /// Поля повторяют GamesStorage — лишние ключи при декодировании игнорируются.

@@ -14,9 +14,9 @@ class GameCell: UITableViewCell {
     @IBOutlet var releaseDateLabel: UILabel!
     @IBOutlet var platformsLabel: UILabel!
 
-    /// URL текущей игры. Используется как токен, чтобы не подставить
+    /// ID текущей игры. Используется как токен, чтобы не подставить
     /// в переиспользованную ячейку картинку от предыдущей игры.
-    private var currentImageURL: URL?
+    private var currentGameID: Int?
 
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -30,7 +30,7 @@ class GameCell: UITableViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
 
-        currentImageURL = nil
+        currentGameID = nil
         gameImageView.image = UIImage(systemName: "photo")
     }
 
@@ -40,7 +40,7 @@ class GameCell: UITableViewCell {
         releaseDateLabel.textColor = dateChanged ? .systemOrange : .secondaryLabel
 
         showPlatformIcons(game.platformBadges)
-        loadImage(from: game.imageURL)
+        loadPoster(for: game)
     }
 
     private func releaseDateText(for releaseDate: Date?, showCountdown: Bool, dateChanged: Bool) -> String {
@@ -87,25 +87,22 @@ class GameCell: UITableViewCell {
         platformsLabel.attributedText = text
     }
 
-    private func loadImage(from url: URL?) {
-        currentImageURL = url
-
-        guard let url else {
-            gameImageView.image = UIImage(systemName: "photo")
-            return
-        }
-
-        if let cached = ImageCache.shared.image(for: url) {
-            gameImageView.image = cached
-            return
-        }
-
+    private func loadPoster(for game: GamesStorage) {
+        currentGameID = game.id
         gameImageView.image = UIImage(systemName: "photo")
 
+        // Любой из кандидатов уже мог быть загружен раньше.
+        for url in (game.artworkURLs ?? []) + game.posterCandidates {
+            if let cached = ImageCache.shared.image(for: url) {
+                gameImageView.image = cached
+                return
+            }
+        }
+
         Task {
-            guard let image = await ImageCache.shared.loadImage(from: url) else { return }
+            guard let image = await ImageCache.shared.loadPoster(for: game) else { return }
             // Применяем картинку только если ячейку не переиспользовали под другую игру.
-            guard currentImageURL == url else { return }
+            guard currentGameID == game.id else { return }
             gameImageView.image = image
         }
     }

@@ -112,6 +112,10 @@ final class ReminderService {
         content.body = String(localized: "Releases today!")
         content.sound = .default
 
+        if let attachment = await imageAttachment(for: game) {
+            content.attachments = [attachment]
+        }
+
         let request = UNNotificationRequest(
             identifier: notificationID(for: game.id),
             content: content,
@@ -120,8 +124,69 @@ final class ReminderService {
         try? await center.add(request)
     }
 
+    /// Постер игры для уведомления: iOS требует файл на диске,
+    /// поэтому скачиваем и кладём во временную папку.
+    private func imageAttachment(for game: GamesStorage) async -> UNNotificationAttachment? {
+        guard let imageURL = game.imageURL,
+              let (data, _) = try? await URLSession.shared.data(from: imageURL) else {
+            return nil
+        }
+
+        let fileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("notification-\(game.id).jpg")
+
+        do {
+            try data.write(to: fileURL)
+            return try UNNotificationAttachment(identifier: "cover", url: fileURL)
+        } catch {
+            return nil
+        }
+    }
+
     private func notificationID(for gameID: Int) -> String {
         "game-release-\(gameID)"
+    }
+
+    // MARK: - Еженедельный дайджест
+
+    /// Ставит уведомление на ближайший понедельник 10:00 со списком
+    /// отслеживаемых игр, выходящих на той неделе. Вызывается при каждом
+    /// запуске — содержимое пересчитывается заново.
+    func scheduleWeeklyDigest() {
+        let digestID = "weekly-digest"
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: [digestID])
+
+        let calendar = Calendar.current
+        var mondayComponents = DateComponents(hour: 10, weekday: 2)
+
+        guard let nextMonday = calendar.nextDate(
+            after: .now,
+            matching: mondayComponents,
+            matchingPolicy: .nextTime
+        ) else { return }
+
+        // Игры, выходящие в течение недели после дайджеста.
+        guard let weekEnd = calendar.date(byAdding: .day, value: 7, to: nextMonday) else { return }
+        let releasing = trackedGames.filter { game in
+            guard let date = game.releaseDate else { return false }
+            return date >= nextMonday && date < weekEnd
+        }
+        guard !releasing.isEmpty else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = String(localized: "This week's releases")
+        content.body = releasing.map(\.gameTitle).joined(separator: ", ")
+        content.sound = .default
+
+        mondayComponents = calendar.dateComponents([.year, .month, .day, .hour], from: nextMonday)
+
+        let request = UNNotificationRequest(
+            identifier: digestID,
+            content: content,
+            trigger: UNCalendarNotificationTrigger(dateMatching: mondayComponents, repeats: false)
+        )
+        center.add(request)
     }
 
 }

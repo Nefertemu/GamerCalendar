@@ -10,6 +10,30 @@ struct GamesStorage: Codable {
     let platforms: String
     /// Иконки платформ для ячейки списка.
     let platformBadges: [PlatformBadge]
+    /// Сколько человек ждут игру на IGDB — для выбора постера дня в сетке.
+    let hypes: Int?
+    /// Постеры по приоритету: арт → обложка → скриншот. Первый может
+    /// оказаться пустым файлом, тогда загрузчик берёт следующий.
+    /// Optional — для декодирования данных, сохранённых старыми версиями.
+    let imageCandidates: [URL]?
+    /// Вертикальная обложка — для клеток календарной сетки.
+    let coverURL: URL?
+    /// Все ключевые арты игры: загрузчик выбирает из них самый детализированный.
+    let artworkURLs: [URL]?
+
+    /// Кандидаты постера с фолбэком для старых сохранённых данных.
+    var posterCandidates: [URL] {
+        if let imageCandidates, !imageCandidates.isEmpty {
+            return imageCandidates
+        }
+        return [imageURL].compactMap { $0 }
+    }
+
+    /// Кандидаты вертикального превью: обложка приоритетнее арта.
+    var portraitPosterCandidates: [URL] {
+        guard let coverURL else { return posterCandidates }
+        return [coverURL] + posterCandidates.filter { $0 != coverURL }
+    }
 }
 
 /// Платформа в виде иконки SF Symbols для ячейки списка.
@@ -45,6 +69,14 @@ struct GameDetails {
     /// Магазины и официальный сайт.
     let links: [GameLink]
     let similarGames: [GamesStorage]
+    /// Первая франшиза игры, если есть.
+    let franchise: GameFranchise?
+}
+
+/// Франшиза для перехода к списку всех игр серии.
+struct GameFranchise {
+    let id: Int
+    let name: String
 }
 
 /// Внешняя ссылка с экрана игры: магазин или официальный сайт.
@@ -114,6 +146,79 @@ final class ImageCache {
         cache.setObject(image, forKey: url as NSURL)
         return image
     }
+
+    /// Горизонтальный постер игры. Среди артов выбирается самый большой
+    /// по весу файл (HEAD-запросы): детализированный постер с логотипом
+    /// весит в разы больше пустышек и тёмных заглушек. Фолбэки — скриншот
+    /// и обложка через обычную цепочку кандидатов.
+    func loadPoster(for game: GamesStorage) async -> UIImage? {
+        let artworks = game.artworkURLs ?? []
+
+        // Выбранный ранее арт уже в памяти — берём его.
+        for url in artworks {
+            if let cached = image(for: url) {
+                return cached
+            }
+        }
+
+        if let best = await richestURL(among: artworks),
+           let image = await loadImage(fromCandidates: [best]) {
+            return image
+        }
+
+        return await loadImage(fromCandidates: game.posterCandidates)
+    }
+
+    /// URL самого детализированного арта. CDN IGDB не отдаёт размер файла
+    /// в заголовках, поэтому скачиваем миниатюры (t_thumb, пара КБ каждая)
+    /// и сравниваем их вес: у пустышек и однотонных заглушек он в разы меньше,
+    /// чем у настоящих постеров с графикой и логотипом.
+    private func richestURL(among urls: [URL]) async -> URL? {
+        guard !urls.isEmpty else { return nil }
+
+        return await withTaskGroup(of: (url: URL, thumbSize: Int)?.self) { group in
+            for url in urls {
+                group.addTask { [session] in
+                    let thumbPath = url.absoluteString.replacingOccurrences(of: "/t_screenshot_big/", with: "/t_thumb/")
+                    guard let thumbURL = URL(string: thumbPath),
+                          let (data, _) = try? await session.data(from: thumbURL) else { return nil }
+
+                    // Миниатюра пустого белого арта весит ~200 байт.
+                    return data.count > 1000 ? (url, data.count) : nil
+                }
+            }
+
+            var best: (url: URL, thumbSize: Int)?
+            for await candidate in group {
+                if let candidate, candidate.thumbSize > (best?.thumbSize ?? 0) {
+                    best = candidate
+                }
+            }
+            return best?.url
+        }
+    }
+
+    /// Первая «содержательная» картинка из кандидатов. У IGDB встречаются
+    /// пустые белые артворки — такие JPEG весят считаные килобайты,
+    /// отсекаем их по размеру файла и берём следующий вариант.
+    func loadImage(fromCandidates urls: [URL]) async -> UIImage? {
+        for url in urls {
+            if let cached = image(for: url) {
+                return cached
+            }
+        }
+
+        for url in urls {
+            guard let (data, _) = try? await session.data(from: url),
+                  data.count > 6000,
+                  let image = UIImage(data: data) else { continue }
+
+            cache.setObject(image, forKey: url as NSURL)
+            return image
+        }
+
+        return nil
+    }
 }
 
 /// Дисковый кэш первой страницы списка: при запуске игры показываются
@@ -146,8 +251,10 @@ struct IGDBGame: Decodable {
     let name: String
     let firstReleaseDate: TimeInterval?
     let cover: IGDBImage?
+    let artworks: [IGDBImage]?
     let screenshots: [IGDBImage]?
     let platforms: [IGDBPlatform]?
+    let hypes: Int?
 }
 
 struct IGDBPlatform: Decodable {
@@ -166,6 +273,12 @@ struct IGDBGameDetail: Decodable {
     let videos: [IGDBVideo]?
     let websites: [IGDBWebsite]?
     let similarGames: [IGDBGame]?
+    let franchises: [IGDBFranchise]?
+}
+
+struct IGDBFranchise: Decodable {
+    let id: Int
+    let name: String
 }
 
 struct IGDBVideo: Decodable {
@@ -240,7 +353,7 @@ final class IGDBService {
         }
 
         let query = """
-        fields name, first_release_date, cover.image_id, screenshots.image_id, platforms.name, platforms.platform_family;
+        fields \(Self.listFields);
         where \(conditions.joined(separator: " & "));
         sort \(sortByHype ? "hypes desc" : "first_release_date asc");
         limit \(Self.pageSize);
@@ -253,12 +366,15 @@ final class IGDBService {
         return (fetched.map(gamesStorage(from:)), fetched.count == Self.pageSize)
     }
 
+    /// Поля списочного запроса: всё, что нужно для GamesStorage.
+    private static let listFields = "name, first_release_date, cover.image_id, artworks.image_id, screenshots.image_id, platforms.name, platforms.platform_family, hypes"
+
     /// Загружает конкретные игры по их id — для сверки дат отслеживаемых игр.
     func fetchGames(ids: [Int]) async throws -> [GamesStorage] {
         guard !ids.isEmpty else { return [] }
 
         let query = """
-        fields name, first_release_date, cover.image_id, screenshots.image_id, platforms.name, platforms.platform_family;
+        fields \(Self.listFields);
         where id = (\(ids.map(String.init).joined(separator: ",")));
         limit \(ids.count);
         """
@@ -267,24 +383,63 @@ final class IGDBService {
         return try decoder.decode([IGDBGame].self, from: data).map(gamesStorage(from:))
     }
 
+    /// Релизы в интервале дат одним запросом — для календарной сетки.
+    /// В месяце бывает больше 500 игр (лимит IGDB), поэтому сортируем
+    /// по хайпу: заметные релизы попадают в сетку гарантированно,
+    /// и первой игрой дня (постером клетки) становится самая ожидаемая.
+    func fetchGames(from startDate: Date, to endDate: Date) async throws -> [GamesStorage] {
+        let query = """
+        fields \(Self.listFields);
+        where first_release_date >= \(Int(startDate.timeIntervalSince1970)) & first_release_date < \(Int(endDate.timeIntervalSince1970)) & game_type = (0,4,8,9,10,11);
+        sort hypes desc;
+        limit 500;
+        """
+
+        let data = try await requestData(endpoint: "games", query: query)
+        return try decoder.decode([IGDBGame].self, from: data).map(gamesStorage(from:))
+    }
+
+    /// Все игры франшизы, новые сверху.
+    func fetchFranchiseGames(franchiseID: Int) async throws -> [GamesStorage] {
+        let query = """
+        fields \(Self.listFields);
+        where franchises = (\(franchiseID)) & game_type = (0,4,8,9,10,11);
+        sort first_release_date desc;
+        limit 500;
+        """
+
+        let data = try await requestData(endpoint: "games", query: query)
+        return try decoder.decode([IGDBGame].self, from: data).map(gamesStorage(from:))
+    }
+
     /// Приводит игру IGDB к модели приложения. Internal для юнит-тестов.
     func gamesStorage(from game: IGDBGame) -> GamesStorage {
-        GamesStorage(
+        // Горизонтальные превью: ключевые арты (берём несколько — первый
+        // бывает пустым файлом), затем скриншот. Портретная обложка — самый
+        // последний вариант: в горизонтальном слоте она сильно обрезается.
+        let artworkURLs = (game.artworks ?? []).prefix(5).compactMap { imageURL($0, size: "t_screenshot_big") }
+        let candidates = artworkURLs + [
+            imageURL(game.screenshots?.first, size: "t_screenshot_big"),
+            imageURL(game.cover, size: "t_cover_big")
+        ].compactMap { $0 }
+
+        return GamesStorage(
             id: game.id,
             gameTitle: game.name,
-            // Скриншот горизонтальный и лучше смотрится в списке и на обложке
-            // экрана деталей; портретная обложка — запасной вариант.
-            imageURL: imageURL(game.screenshots?.first, size: "t_screenshot_big")
-                ?? imageURL(game.cover, size: "t_cover_big"),
+            imageURL: candidates.first,
             releaseDate: game.firstReleaseDate.map { Date(timeIntervalSince1970: $0) },
             platforms: game.platforms?.map(\.name).joined(separator: ", ") ?? "",
-            platformBadges: platformBadges(for: game.platforms)
+            platformBadges: platformBadges(for: game.platforms),
+            hypes: game.hypes,
+            imageCandidates: candidates,
+            coverURL: imageURL(game.cover, size: "t_cover_big"),
+            artworkURLs: artworkURLs
         )
     }
 
     func fetchGameDetails(id: Int) async throws -> GameDetails {
         let query = """
-        fields summary, genres.name, involved_companies.company.name, involved_companies.developer, screenshots.image_id, total_rating, total_rating_count, videos.video_id, websites.url, websites.type, similar_games.name, similar_games.first_release_date, similar_games.cover.image_id, similar_games.screenshots.image_id, similar_games.platforms.name, similar_games.platforms.platform_family;
+        fields summary, genres.name, involved_companies.company.name, involved_companies.developer, screenshots.image_id, total_rating, total_rating_count, videos.video_id, websites.url, websites.type, franchises.name, similar_games.name, similar_games.first_release_date, similar_games.cover.image_id, similar_games.artworks.image_id, similar_games.screenshots.image_id, similar_games.platforms.name, similar_games.platforms.platform_family;
         where id = \(id);
         """
 
@@ -306,7 +461,8 @@ final class IGDBService {
             ratingsCount: detail.totalRatingCount ?? 0,
             trailerURL: detail.videos?.first.flatMap { URL(string: "https://www.youtube.com/watch?v=\($0.videoId)") },
             links: links(from: detail.websites),
-            similarGames: detail.similarGames?.map(gamesStorage(from:)) ?? []
+            similarGames: detail.similarGames?.map(gamesStorage(from:)) ?? [],
+            franchise: detail.franchises?.first.map { GameFranchise(id: $0.id, name: $0.name) }
         )
     }
 

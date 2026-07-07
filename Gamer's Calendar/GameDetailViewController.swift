@@ -10,6 +10,7 @@ class GameDetailViewController: UIViewController {
     private let gameService: IGDBService
 
     private let contentStack = UIStackView()
+    private let coverImageView = UIImageView()
     private let spinner = UIActivityIndicatorView(style: .medium)
     private var screenshotURLs: [URL] = []
     private var similarGames: [GamesStorage] = []
@@ -40,10 +41,37 @@ class GameDetailViewController: UIViewController {
 
     private func updateReminderButton() {
         let hasReminder = ReminderService.shared.hasReminder(for: game.id)
-        navigationItem.rightBarButtonItem = UIBarButtonItem(
+        var buttons = [UIBarButtonItem(
             image: UIImage(systemName: hasReminder ? "bell.fill" : "bell"),
             primaryAction: UIAction { [weak self] _ in self?.toggleReminder() }
+        )]
+
+        // Отсчёт до релиза на экране блокировки (Live Activity).
+        if #available(iOS 16.2, *), let releaseDate = game.releaseDate, releaseDate > .now {
+            buttons.append(UIBarButtonItem(
+                image: UIImage(systemName: "timer"),
+                primaryAction: UIAction { [weak self] _ in self?.startCountdown() }
+            ))
+        }
+
+        navigationItem.rightBarButtonItems = buttons
+    }
+
+    @available(iOS 16.2, *)
+    private func startCountdown() {
+        let started = ReleaseCountdown.start(for: game)
+
+        let alert = UIAlertController(
+            title: started
+                ? String(localized: "Countdown started")
+                : String(localized: "Couldn't start countdown"),
+            message: started
+                ? String(localized: "Check your Lock Screen and Dynamic Island.")
+                : String(localized: "Live Activities are disabled in Settings."),
+            preferredStyle: .alert
         )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
     }
 
     private func toggleReminder() {
@@ -80,6 +108,7 @@ class GameDetailViewController: UIViewController {
 
     private func setupLayout() {
         let scrollView = UIScrollView()
+        scrollView.delegate = self
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(scrollView)
 
@@ -105,13 +134,12 @@ class GameDetailViewController: UIViewController {
     // MARK: - Базовая информация (доступна сразу из списка)
 
     private func showBasicInfo() {
-        let coverImageView = UIImageView()
         coverImageView.contentMode = .scaleAspectFill
         coverImageView.clipsToBounds = true
         coverImageView.backgroundColor = .secondarySystemFill
         coverImageView.heightAnchor.constraint(equalTo: coverImageView.widthAnchor, multiplier: 9.0 / 16.0).isActive = true
         contentStack.addArrangedSubview(coverImageView)
-        loadImage(from: game.imageURL, into: coverImageView)
+        loadPoster(for: game, into: coverImageView)
 
         let titleLabel = UILabel()
         titleLabel.font = .systemFont(ofSize: 28, weight: .bold)
@@ -155,6 +183,10 @@ class GameDetailViewController: UIViewController {
 
         if let trailerURL = details.trailerURL {
             addTrailerButton(trailerURL)
+        }
+
+        if let franchise = details.franchise {
+            addFranchiseButton(franchise)
         }
 
         if !details.about.isEmpty {
@@ -240,6 +272,20 @@ class GameDetailViewController: UIViewController {
         present(SFSafariViewController(url: url), animated: true)
     }
 
+    private func addFranchiseButton(_ franchise: GameFranchise) {
+        var config = UIButton.Configuration.bordered()
+        config.title = String(localized: "Franchise: \(franchise.name)")
+        config.image = UIImage(systemName: "square.stack.3d.up")
+        config.imagePadding = 8
+
+        let button = UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
+            guard let self else { return }
+            let franchiseController = FranchiseViewController(franchise: franchise, gameService: gameService)
+            navigationController?.pushViewController(franchiseController, animated: true)
+        })
+        addPadded(button)
+    }
+
     // MARK: - Похожие игры
 
     private func addSimilarGames(_ games: [GamesStorage]) {
@@ -286,7 +332,7 @@ class GameDetailViewController: UIViewController {
         imageView.backgroundColor = .secondarySystemFill
         imageView.widthAnchor.constraint(equalToConstant: 200).isActive = true
         imageView.heightAnchor.constraint(equalToConstant: 112).isActive = true
-        loadImage(from: game.imageURL, into: imageView)
+        loadPoster(for: game, into: imageView)
 
         let titleLabel = UILabel()
         titleLabel.font = .systemFont(ofSize: 13, weight: .medium)
@@ -449,6 +495,14 @@ class GameDetailViewController: UIViewController {
         contentStack.addArrangedSubview(container)
     }
 
+    /// Постер с выбором лучшего арта и запасными вариантами.
+    private func loadPoster(for game: GamesStorage, into imageView: UIImageView) {
+        Task {
+            guard let image = await ImageCache.shared.loadPoster(for: game) else { return }
+            imageView.image = image
+        }
+    }
+
     private func loadImage(from url: URL?, into imageView: UIImageView) {
         guard let url else { return }
 
@@ -460,6 +514,24 @@ class GameDetailViewController: UIViewController {
         Task {
             guard let image = await ImageCache.shared.loadImage(from: url) else { return }
             imageView.image = image
+        }
+    }
+
+}
+
+// MARK: - Stretchy-обложка
+
+extension GameDetailViewController: UIScrollViewDelegate {
+
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        // При оттягивании списка вниз обложка растягивается с лёгким параллаксом.
+        let offset = scrollView.contentOffset.y + scrollView.adjustedContentInset.top
+        if offset < 0 {
+            let scale = 1 - offset / 300
+            coverImageView.transform = CGAffineTransform(translationX: 0, y: offset / 2)
+                .scaledBy(x: scale, y: scale)
+        } else {
+            coverImageView.transform = .identity
         }
     }
 

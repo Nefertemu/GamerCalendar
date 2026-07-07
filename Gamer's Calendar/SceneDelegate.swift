@@ -15,25 +15,34 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
 
-        // Корень приложения — таб-бар: календарь релизов и отслеживаемые игры.
+        // Корень приложения — таб-бар: лента релизов, календарная сетка
+        // и отслеживаемые игры.
         // Grouped-стиль: заголовки месяцев не прилипают к навбару при скролле.
-        let calendarViewController = TableViewController(style: .grouped)
-        calendarViewController.tabBarItem = UITabBarItem(
+        let feedViewController = TableViewController(style: .grouped)
+        feedViewController.tabBarItem = UITabBarItem(
+            title: String(localized: "Feed"),
+            image: UIImage(systemName: "list.bullet.below.rectangle"),
+            tag: 0
+        )
+
+        let gridViewController = MonthGridViewController()
+        gridViewController.tabBarItem = UITabBarItem(
             title: String(localized: "Calendar"),
             image: UIImage(systemName: "calendar"),
-            tag: 0
+            tag: 1
         )
 
         let watchlistViewController = WatchlistViewController()
         watchlistViewController.tabBarItem = UITabBarItem(
             title: String(localized: "Watchlist"),
             image: UIImage(systemName: "bell"),
-            tag: 1
+            tag: 2
         )
 
         let tabBarController = UITabBarController()
         tabBarController.viewControllers = [
-            UINavigationController(rootViewController: calendarViewController),
+            UINavigationController(rootViewController: feedViewController),
+            UINavigationController(rootViewController: gridViewController),
             UINavigationController(rootViewController: watchlistViewController)
         ]
 
@@ -51,8 +60,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func sceneDidBecomeActive(_ scene: UIScene) {
-        // Called when the scene has moved from an inactive state to an active state.
-        // Use this method to restart any tasks that were paused (or not yet started) when the scene was inactive.
+        // Пересчитываем еженедельный дайджест: список отслеживаемых игр
+        // и их даты могли измениться.
+        ReminderService.shared.scheduleWeeklyDigest()
     }
 
     func sceneWillResignActive(_ scene: UIScene) {
