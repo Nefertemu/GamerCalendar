@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		2234B4AC2822BF0100B8CCB0 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2234B4AB2822BF0100B8CCB0 /* AppDelegate.swift */; };
 		2234B4AE2822BF0100B8CCB0 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2234B4AD2822BF0100B8CCB0 /* SceneDelegate.swift */; };
-		2234B4B32822BF0100B8CCB0 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2234B4B12822BF0100B8CCB0 /* Main.storyboard */; };
 		2234B4B52822BF0400B8CCB0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2234B4B42822BF0400B8CCB0 /* Assets.xcassets */; };
 		2234B4B82822BF0400B8CCB0 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2234B4B62822BF0400B8CCB0 /* LaunchScreen.storyboard */; };
 		2234B4DC2822C38200B8CCB0 /* TableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2234B4DB2822C38200B8CCB0 /* TableViewController.swift */; };
@@ -74,7 +73,6 @@
 		2234B4A82822BF0100B8CCB0 /* Gamer's Calendar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Gamer's Calendar.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2234B4AB2822BF0100B8CCB0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		2234B4AD2822BF0100B8CCB0 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		2234B4B22822BF0100B8CCB0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		2234B4B42822BF0400B8CCB0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2234B4B72822BF0400B8CCB0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		2234B4B92822BF0400B8CCB0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -97,7 +95,6 @@
 		43949C6A2FFC3B09009E11E5 /* Gamer's Calendar.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Gamer's Calendar.entitlements"; sourceTree = "<group>"; };
 		43949C6B2FFC3B4C009E11E5 /* GamerCalendarWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = GamerCalendarWidgetExtension.entitlements; sourceTree = "<group>"; };
 		43949C6C2FFC3BB8009E11E5 /* GamerCalendarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamerCalendarTests.swift; sourceTree = "<group>"; };
-		43949C6E2FFC3BC5009E11E5 /* Gamer's CalendarTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Gamer's CalendarTests-Bridging-Header.h"; sourceTree = "<group>"; };
 		43949C6F2FFC4F86009E11E5 /* MonthGridViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonthGridViewController.swift; sourceTree = "<group>"; };
 		43949C712FFC4F8C009E11E5 /* FranchiseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FranchiseViewController.swift; sourceTree = "<group>"; };
 		43949C732FFC4F99009E11E5 /* ReleaseCountdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseCountdown.swift; sourceTree = "<group>"; };
@@ -160,7 +157,6 @@
 				43949C582FFC3AD8009E11E5 /* GamerCalendarWidget */,
 				43949C532FFC3AD8009E11E5 /* Frameworks */,
 				2234B4A92822BF0100B8CCB0 /* Products */,
-				43949C6E2FFC3BC5009E11E5 /* Gamer's CalendarTests-Bridging-Header.h */,
 			);
 			sourceTree = "<group>";
 		};
@@ -184,7 +180,6 @@
 				2234B4AD2822BF0100B8CCB0 /* SceneDelegate.swift */,
 				2234B4DB2822C38200B8CCB0 /* TableViewController.swift */,
 				2234B4DD2822C45500B8CCB0 /* Model */,
-				2234B4B12822BF0100B8CCB0 /* Main.storyboard */,
 				2234B4B42822BF0400B8CCB0 /* Assets.xcassets */,
 				2234B4B62822BF0400B8CCB0 /* LaunchScreen.storyboard */,
 				2234B4B92822BF0400B8CCB0 /* Info.plist */,
@@ -366,7 +361,6 @@
 				2234B4B82822BF0400B8CCB0 /* LaunchScreen.storyboard in Resources */,
 				43949C452FFBAE26009E11E5 /* Localizable.xcstrings in Resources */,
 				2234B4B52822BF0400B8CCB0 /* Assets.xcassets in Resources */,
-				2234B4B32822BF0100B8CCB0 /* Main.storyboard in Resources */,
 				2234B4E62822C91A00B8CCB0 /* GameCell.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -458,14 +452,6 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
-		2234B4B12822BF0100B8CCB0 /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				2234B4B22822BF0100B8CCB0 /* Base */,
-			);
-			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
 		2234B4B62822BF0400B8CCB0 /* LaunchScreen.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
