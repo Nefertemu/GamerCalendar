@@ -389,13 +389,13 @@ private class DayCell: UICollectionViewCell {
         currentImageURL = requestKey
         imageView.image = nil
 
-        guard requestKey != nil else { return }
+        guard let requestKey else { return }
 
-        for url in candidates {
-            if let cached = ImageCache.shared.image(for: url) {
-                imageView.image = cached
-                return
-            }
+        // Синхронно — только самый приоритетный кандидат (обложка),
+        // иначе арт из кэша ленты перебьёт вертикальный постер.
+        if let cached = ImageCache.shared.image(for: requestKey) {
+            imageView.image = cached
+            return
         }
 
         Task {

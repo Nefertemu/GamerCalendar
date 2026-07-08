@@ -167,6 +167,36 @@
         }
       }
     },
+    "%@ — releases %@. Tracking with Gamer Calendar!" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«%1$@» выходит %2$@. Слежу в Gamer Calendar!"
+          }
+        }
+      }
+    },
+    "Adventure" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Приключения"
+          }
+        }
+      }
+    },
+    "All Genres" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Все жанры"
+          }
+        }
+      }
+    },
     "All Platforms" : {
       "localizations" : {
         "ru" : {
@@ -297,6 +327,16 @@
         }
       }
     },
+    "Genre" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Жанр"
+          }
+        }
+      }
+    },
     "Genres" : {
       "localizations" : {
         "ru" : {
@@ -397,12 +437,32 @@
         }
       }
     },
+    "Indie" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Инди"
+          }
+        }
+      }
+    },
     "Platform" : {
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Платформа"
+          }
+        }
+      }
+    },
+    "Platformer" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Платформеры"
           }
         }
       }
@@ -417,12 +477,32 @@
         }
       }
     },
+    "Racing" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Гонки"
+          }
+        }
+      }
+    },
     "Release date: %@" : {
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Дата выхода: %@"
+          }
+        }
+      }
+    },
+    "Releases %@" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выходит %@"
           }
         }
       }
@@ -467,6 +547,16 @@
         }
       }
     },
+    "RPG" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RPG"
+          }
+        }
+      }
+    },
     "Screenshots" : {
       "localizations" : {
         "ru" : {
@@ -487,12 +577,42 @@
         }
       }
     },
+    "Shooter" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Шутеры"
+          }
+        }
+      }
+    },
     "Show games for" : {
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показывать игры на"
+          }
+        }
+      }
+    },
+    "Simulator" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Симуляторы"
+          }
+        }
+      }
+    },
+    "Strategy" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Стратегии"
           }
         }
       }

@@ -2,6 +2,7 @@
 import Foundation
 import UserNotifications
 import WidgetKit
+import CoreSpotlight
 
 /// Отслеживаемые игры: локальное уведомление утром в день релиза
 /// плюс сохранённый снимок игры для вкладки «Жду» и виджета.
@@ -41,6 +42,28 @@ final class ReminderService {
             }
             defaults.set(try? JSONEncoder().encode(sorted), forKey: storageKey)
             WidgetCenter.shared.reloadAllTimelines()
+            reindexSpotlight(sorted)
+        }
+    }
+
+    /// Отслеживаемые игры ищутся из системного поиска iPhone.
+    private func reindexSpotlight(_ games: [GamesStorage]) {
+        let items = games.map { game -> CSSearchableItem in
+            let attributes = CSSearchableItemAttributeSet(contentType: .content)
+            attributes.title = game.gameTitle
+            if let releaseDate = game.releaseDate {
+                attributes.contentDescription = String(localized: "Releases \(releaseDate.formatted(date: .long, time: .omitted))")
+            }
+            return CSSearchableItem(
+                uniqueIdentifier: "game-\(game.id)",
+                domainIdentifier: "trackedGames",
+                attributeSet: attributes
+            )
+        }
+
+        let index = CSSearchableIndex.default()
+        index.deleteSearchableItems(withDomainIdentifiers: ["trackedGames"]) { _ in
+            index.indexSearchableItems(items)
         }
     }
 

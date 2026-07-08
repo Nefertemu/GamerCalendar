@@ -35,7 +35,7 @@ struct IGDBMappingTests {
         #expect(storage.id == 42)
         #expect(storage.gameTitle == "Test Game")
         #expect(storage.releaseDate == Date(timeIntervalSince1970: 1_751_846_400))
-        #expect(storage.imageURL?.absoluteString == "https://images.igdb.com/igdb/image/upload/t_screenshot_big/sc42.jpg")
+        #expect(storage.imageURL?.absoluteString == "https://images.igdb.com/igdb/image/upload/t_720p/sc42.jpg")
         #expect(storage.platforms == "PC (Microsoft Windows), PlayStation 4")
     }
 

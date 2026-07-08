@@ -38,6 +38,14 @@ class TableViewController: UITableViewController {
         }
     }
 
+    /// Выбранный жанр; переживает перезапуск приложения.
+    private var genreFilter = (UserDefaults.standard.object(forKey: "filter.genre") as? Int).flatMap(GenreFilter.init(rawValue:)) {
+        didSet {
+            UserDefaults.standard.set(genreFilter?.rawValue, forKey: "filter.genre")
+            reloadFromScratch()
+        }
+    }
+
     private enum SortOrder {
         case releaseDate
         case hype
@@ -157,12 +165,30 @@ class TableViewController: UITableViewController {
             }
         }
 
-        let filterIcon = platformFilter == nil
+        let allGenresAction = UIAction(
+            title: String(localized: "All Genres"),
+            state: genreFilter == nil ? .on : .off
+        ) { [weak self] _ in
+            self?.genreFilter = nil
+        }
+        let genreActions = [allGenresAction] + GenreFilter.allCases.map { genre in
+            UIAction(
+                title: genre.title,
+                state: genre == genreFilter ? .on : .off
+            ) { [weak self] _ in
+                self?.genreFilter = genre
+            }
+        }
+
+        let filterIcon = platformFilter == nil && genreFilter == nil
             ? "line.3.horizontal.decrease.circle"
             : "line.3.horizontal.decrease.circle.fill"
         let filterButton = UIBarButtonItem(
             image: UIImage(systemName: filterIcon),
-            menu: UIMenu(title: String(localized: "Platform"), children: platformActions)
+            menu: UIMenu(children: [
+                UIMenu(title: String(localized: "Platform"), options: .displayInline, children: platformActions),
+                UIMenu(title: String(localized: "Genre"), options: .displayInline, children: genreActions)
+            ])
         )
 
         navigationItem.rightBarButtonItems = [calendarButton, filterButton]
@@ -204,6 +230,7 @@ class TableViewController: UITableViewController {
                     monthsAhead: monthsAhead,
                     search: searchQuery,
                     platform: platformFilter,
+                    genre: genreFilter,
                     sortByHype: sortOrder == .hype
                 )
 
@@ -215,7 +242,7 @@ class TableViewController: UITableViewController {
                     // Первая страница из сети заменяет кэшированную с запуска.
                     sections = []
 
-                    if searchQuery == nil, platformFilter == nil, sortOrder == .releaseDate {
+                    if searchQuery == nil, platformFilter == nil, genreFilter == nil, sortOrder == .releaseDate {
                         FirstPageCache.save(fetched)
                     }
                 }

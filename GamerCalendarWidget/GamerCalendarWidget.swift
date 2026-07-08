@@ -147,6 +147,10 @@ struct NextReleaseWidgetView: View {
         .foregroundStyle(.white.opacity(0.85))
     }
 
+    private func deepLink(to game: WidgetGame) -> URL? {
+        URL(string: "gamercalendar://game/\(game.id)")
+    }
+
     private var smallView: some View {
         VStack(alignment: .leading, spacing: 6) {
             Image(systemName: "gamecontroller.fill")
@@ -165,20 +169,24 @@ struct NextReleaseWidgetView: View {
         }
         .foregroundStyle(.white)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .widgetURL(deepLink(to: entry.games[0]))
     }
 
     private var mediumView: some View {
         VStack(alignment: .leading, spacing: 8) {
             ForEach(entry.games.prefix(3)) { game in
-                HStack(alignment: .firstTextBaseline) {
-                    Text(game.gameTitle)
-                        .font(.subheadline.weight(.medium))
-                        .lineLimit(1)
-                    Spacer()
-                    if let date = game.releaseDate {
-                        Text(date, style: .relative)
-                            .font(.caption.bold())
-                            .foregroundStyle(.orange)
+                // Тап по строке открывает игру в приложении.
+                Link(destination: deepLink(to: game) ?? URL(string: "gamercalendar://")!) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(game.gameTitle)
+                            .font(.subheadline.weight(.medium))
+                            .lineLimit(1)
+                        Spacer()
+                        if let date = game.releaseDate {
+                            Text(date, style: .relative)
+                                .font(.caption.bold())
+                                .foregroundStyle(.orange)
+                        }
                     }
                 }
             }

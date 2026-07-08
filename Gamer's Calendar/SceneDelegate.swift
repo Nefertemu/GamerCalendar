@@ -6,10 +6,13 @@
 //
 
 import UIKit
+import CoreSpotlight
 
-class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+class SceneDelegate: UIResponder, UIWindowSceneDelegate, UITabBarControllerDelegate {
 
     var window: UIWindow?
+
+    private let gameService = IGDBService()
 
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
@@ -40,6 +43,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         )
 
         let tabBarController = UITabBarController()
+        tabBarController.delegate = self
         tabBarController.viewControllers = [
             UINavigationController(rootViewController: feedViewController),
             UINavigationController(rootViewController: gridViewController),
@@ -50,6 +54,61 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window.rootViewController = tabBarController
         window.makeKeyAndVisible()
         self.window = window
+
+        // Запуск по ссылке из виджета или из Spotlight.
+        if let url = connectionOptions.urlContexts.first?.url {
+            handle(url)
+        }
+        if let userActivity = connectionOptions.userActivities.first {
+            self.scene(scene, continue: userActivity)
+        }
+    }
+
+    // MARK: - Deep links (виджет, шаринг) и Spotlight
+
+    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+        guard let url = URLContexts.first?.url else { return }
+        handle(url)
+    }
+
+    func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
+        guard userActivity.activityType == CSSearchableItemActionType,
+              let identifier = userActivity.userInfo?[CSSearchableItemActivityIdentifier] as? String,
+              let gameID = Int(identifier.dropFirst("game-".count)) else { return }
+        openGame(id: gameID)
+    }
+
+    /// Разбирает ссылки вида gamercalendar://game/123.
+    private func handle(_ url: URL) {
+        guard url.scheme == "gamercalendar", url.host == "game",
+              let gameID = Int(url.lastPathComponent) else { return }
+        openGame(id: gameID)
+    }
+
+    private func openGame(id: Int) {
+        guard let tabBarController = window?.rootViewController as? UITabBarController,
+              let navigation = tabBarController.selectedViewController as? UINavigationController else { return }
+
+        Task {
+            guard let game = try? await gameService.fetchGames(ids: [id]).first else { return }
+            navigation.pushViewController(
+                GameDetailViewController(game: game, gameService: gameService),
+                animated: true
+            )
+        }
+    }
+
+    // MARK: - UITabBarControllerDelegate
+
+    func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
+        // Повторный тап по текущему табу прокручивает список к началу.
+        if viewController === tabBarController.selectedViewController,
+           let navigation = viewController as? UINavigationController,
+           let tableController = navigation.topViewController as? UITableViewController {
+            let topOffset = CGPoint(x: 0, y: -tableController.tableView.adjustedContentInset.top)
+            tableController.tableView.setContentOffset(topOffset, animated: true)
+        }
+        return true
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {

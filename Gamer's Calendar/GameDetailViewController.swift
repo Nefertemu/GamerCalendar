@@ -14,6 +14,7 @@ class GameDetailViewController: UIViewController {
     private let spinner = UIActivityIndicatorView(style: .medium)
     private var screenshotURLs: [URL] = []
     private var similarGames: [GamesStorage] = []
+    private var pageURL: URL?
 
     init(game: GamesStorage, gameService: IGDBService) {
         self.game = game
@@ -54,7 +55,24 @@ class GameDetailViewController: UIViewController {
             ))
         }
 
+        buttons.append(UIBarButtonItem(
+            image: UIImage(systemName: "square.and.arrow.up"),
+            primaryAction: UIAction { [weak self] _ in self?.shareGame() }
+        ))
+
         navigationItem.rightBarButtonItems = buttons
+    }
+
+    private func shareGame() {
+        let dateText = game.releaseDate?.formatted(date: .long, time: .omitted) ?? ""
+        let text = String(localized: "\(game.gameTitle) — releases \(dateText). Tracking with Gamer Calendar!")
+
+        var items: [Any] = [text]
+        if let pageURL {
+            items.append(pageURL)
+        }
+
+        present(UIActivityViewController(activityItems: items, applicationActivities: nil), animated: true)
     }
 
     @available(iOS 16.2, *)
@@ -179,6 +197,7 @@ class GameDetailViewController: UIViewController {
     }
 
     private func showDetails(_ details: GameDetails) {
+        pageURL = details.pageURL
         addRating(details)
 
         if let trailerURL = details.trailerURL {
