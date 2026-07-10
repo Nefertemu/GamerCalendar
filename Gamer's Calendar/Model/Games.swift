@@ -384,12 +384,15 @@ struct TwitchToken: Decodable {
 
 enum IGDBServiceError: LocalizedError {
     case invalidResponse
+    case missingCredentials
     case requestFailed(statusCode: Int, body: String)
 
     var errorDescription: String? {
         switch self {
         case .invalidResponse:
             return String(localized: "Unexpected IGDB response")
+        case .missingCredentials:
+            return String(localized: "Missing IGDB credentials")
         case let .requestFailed(statusCode, body):
             guard !body.isEmpty else {
                 return String(localized: "IGDB request failed with status \(statusCode)")
@@ -610,6 +613,10 @@ final class IGDBService: GameCatalogService {
     private func validToken() async throws -> String {
         if let accessToken, tokenExpiry > Date() {
             return accessToken
+        }
+
+        guard !Secrets.igdbClientID.isEmpty, !Secrets.igdbClientSecret.isEmpty else {
+            throw IGDBServiceError.missingCredentials
         }
 
         var components = URLComponents(string: "https://id.twitch.tv/oauth2/token")!

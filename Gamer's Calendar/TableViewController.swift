@@ -275,7 +275,7 @@ class TableViewController: UITableViewController {
                 guard generation == loadGeneration else { return }
                 isLoading = false
                 if sections.isEmpty {
-                    showErrorState()
+                    showErrorState(error: error)
                 }
             }
 
@@ -312,11 +312,20 @@ class TableViewController: UITableViewController {
         tableView.backgroundView = label
     }
 
-    private func showErrorState() {
+    private func showErrorState(error: Error) {
         let label = UILabel()
         label.font = .systemFont(ofSize: 15)
         label.textColor = .secondaryLabel
+        label.textAlignment = .center
+        label.numberOfLines = 0
         label.text = String(localized: "Couldn't load games")
+
+        let detailLabel = UILabel()
+        detailLabel.font = .systemFont(ofSize: 13)
+        detailLabel.textColor = .tertiaryLabel
+        detailLabel.textAlignment = .center
+        detailLabel.numberOfLines = 0
+        detailLabel.text = error.localizedDescription
 
         var buttonConfig = UIButton.Configuration.borderedProminent()
         buttonConfig.title = String(localized: "Retry")
@@ -324,9 +333,9 @@ class TableViewController: UITableViewController {
             self?.reloadFromScratch()
         })
 
-        let stack = UIStackView(arrangedSubviews: [label, retryButton])
+        let stack = UIStackView(arrangedSubviews: [label, detailLabel, retryButton])
         stack.axis = .vertical
-        stack.spacing = 12
+        stack.spacing = 8
         stack.alignment = .center
 
         let container = UIView()
@@ -334,7 +343,9 @@ class TableViewController: UITableViewController {
         container.addSubview(stack)
         NSLayoutConstraint.activate([
             stack.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            stack.centerYAnchor.constraint(equalTo: container.centerYAnchor)
+            stack.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            stack.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor, constant: 32),
+            stack.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor, constant: -32)
         ])
 
         tableView.backgroundView = container

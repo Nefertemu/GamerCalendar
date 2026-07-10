@@ -7,8 +7,8 @@ Built with **UIKit**, **SwiftUI (widget)**, **Swift Concurrency (async/await)**,
 ## Features
 
 ### Browsing
-- 📅 **Release feed** — upcoming games grouped by month with infinite scrolling, pull-to-refresh, and a navigation title that follows the month you're scrolling through.
-- 🗓 **Calendar grid** — a real month view with game posters on release days. Tap a day to see its releases in a sheet. Months switch instantly: adjacent months and their posters are prefetched in the background.
+- 📅 **Release feed** — upcoming games grouped by month with infinite scrolling, pull-to-refresh, detailed error states, and a navigation title that follows the month you're scrolling through.
+- 🗓 **Calendar grid** — a real month view with game posters on release days, loading/error/empty states, swipe navigation, and a Today shortcut. Tap a day to see its releases in a sheet. Months switch instantly: adjacent months and their posters are prefetched in the background.
 - 🔍 **Search** — debounced search across upcoming releases.
 - 🎛 **Filters & sorting** — platform family (PC / PlayStation / Xbox / Nintendo), date window from 3 months to 5 years, sort by release date or by hype. Selected filters persist across launches.
 
@@ -53,7 +53,7 @@ enum Secrets {
 - `Model/Games.swift` — domain models (`GamesStorage`, `GameDetails`), the `IGDBService` network layer (token refresh, Apicalypse query building, response mapping), image cache with artwork quality selection, first-page cache.
 - `Model/ReminderService.swift` — watchlist storage (App Group `UserDefaults`, shared with the widget), release notifications, weekly digest.
 - `Model/ReleaseCountdown.swift` — Live Activity attributes and start logic.
-- `TableViewController` — release feed: month sections, search, filters, pagination, error/empty states.
+- `TableViewController` — release feed: month sections, search, filters, pagination, detailed error/empty states.
 - `MonthGridViewController` — calendar grid with month cache and adjacent-month prefetch.
 - `WatchlistViewController` — tracked games with countdowns and date-change refresh.
 - `GameDetailViewController` — game page assembled from stack views.
@@ -66,10 +66,8 @@ The app talks to IGDB v4 (`/games` endpoint with the Apicalypse query language).
 
 ## Roadmap
 
-- [ ] Interactive widget with deep links into a game page
-- [ ] Share a game (share sheet + universal link routing)
-- [ ] Spotlight indexing of tracked games
-- [ ] Genre filter
+- [ ] Interactive widget controls
+- [ ] Universal links for shared games
 - [ ] iPad layout (split view) and Mac Catalyst
-- [ ] Network layer behind a protocol + more unit tests
+- [ ] UI tests for feed, calendar, watchlist, and deep links
 - [ ] Screenshots in this README

@@ -25,6 +25,8 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
     private let monthLabel = UILabel()
     private var collectionView: UICollectionView!
     private var loadTask: Task<Void, Never>?
+    private let loadingIndicator = UIActivityIndicatorView(style: .medium)
+    private let statusStack = UIStackView()
 
     private let monthFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -47,6 +49,10 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
 
         view.backgroundColor = .systemBackground
         navigationItem.title = String(localized: "Calendar")
+        navigationItem.rightBarButtonItem = UIBarButtonItem(
+            title: String(localized: "Today"),
+            primaryAction: UIAction { [weak self] _ in self?.showCurrentMonth() }
+        )
 
         setupLayout()
         reload()
@@ -95,6 +101,11 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
         })
         weekdayRow.distribution = .fillEqually
 
+        statusStack.axis = .vertical
+        statusStack.alignment = .center
+        statusStack.spacing = 6
+        statusStack.isHidden = true
+
         let layout = UICollectionViewCompositionalLayout { _, _ in
             let item = NSCollectionLayoutItem(layoutSize: .init(
                 widthDimension: .fractionalWidth(1.0 / 7.0),
@@ -118,7 +129,15 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
         collectionView.delegate = self
         collectionView.register(DayCell.self, forCellWithReuseIdentifier: "DayCell")
 
-        let stack = UIStackView(arrangedSubviews: [header, weekdayRow, collectionView])
+        let leftSwipe = UISwipeGestureRecognizer(target: self, action: #selector(monthSwiped(_:)))
+        leftSwipe.direction = .left
+        collectionView.addGestureRecognizer(leftSwipe)
+
+        let rightSwipe = UISwipeGestureRecognizer(target: self, action: #selector(monthSwiped(_:)))
+        rightSwipe.direction = .right
+        collectionView.addGestureRecognizer(rightSwipe)
+
+        let stack = UIStackView(arrangedSubviews: [header, weekdayRow, statusStack, collectionView])
         stack.axis = .vertical
         stack.spacing = 8
         stack.setCustomSpacing(4, after: weekdayRow)
@@ -140,6 +159,21 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
         month = calendar.date(byAdding: .month, value: delta, to: month) ?? month
     }
 
+    private func showCurrentMonth() {
+        month = calendar.dateInterval(of: .month, for: .now)?.start ?? .now
+    }
+
+    @objc private func monthSwiped(_ gesture: UISwipeGestureRecognizer) {
+        switch gesture.direction {
+        case .left:
+            shiftMonth(by: 1)
+        case .right:
+            shiftMonth(by: -1)
+        default:
+            break
+        }
+    }
+
     private func reload() {
         loadTask?.cancel()
 
@@ -157,24 +191,28 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
         }
 
         gamesByDay = [:]
-        collectionView.backgroundView = nil
+        hideCalendarMessage()
+        showLoadingState()
         collectionView.reloadData()
 
         loadTask = Task { [weak self] in
             guard let self else { return }
 
-            guard let byDay = await loadMonth(month), !Task.isCancelled else {
+            do {
+                let byDay = try await loadMonth(month)
+                guard !Task.isCancelled else { return }
+                gamesByDay = byDay
+                updateCalendarState(for: byDay)
+                collectionView.reloadData()
+                prefetchAdjacentMonths()
+            } catch {
                 guard !Task.isCancelled else { return }
                 showCalendarMessage(
                     text: String(localized: "Couldn't load games"),
+                    detail: error.localizedDescription,
                     retryTitle: String(localized: "Retry")
                 )
-                return
             }
-            gamesByDay = byDay
-            updateCalendarState(for: byDay)
-            collectionView.reloadData()
-            prefetchAdjacentMonths()
         }
     }
 
@@ -182,11 +220,23 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
         if gamesByDay.isEmpty {
             showCalendarMessage(text: String(localized: "No games found"))
         } else {
-            collectionView.backgroundView = nil
+            hideCalendarMessage()
         }
     }
 
-    private func showCalendarMessage(text: String, retryTitle: String? = nil) {
+    private func showLoadingState() {
+        loadingIndicator.startAnimating()
+        collectionView.backgroundView = loadingIndicator
+    }
+
+    private func showCalendarMessage(text: String, detail: String? = nil, retryTitle: String? = nil) {
+        loadingIndicator.stopAnimating()
+        collectionView.backgroundView = nil
+        statusStack.arrangedSubviews.forEach { view in
+            statusStack.removeArrangedSubview(view)
+            view.removeFromSuperview()
+        }
+
         let label = UILabel()
         label.font = .systemFont(ofSize: 15)
         label.textColor = .secondaryLabel
@@ -194,43 +244,51 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
         label.numberOfLines = 0
         label.text = text
 
-        let stack = UIStackView(arrangedSubviews: [label])
-        stack.axis = .vertical
-        stack.alignment = .center
-        stack.spacing = 12
+        statusStack.addArrangedSubview(label)
+
+        if let detail, !detail.isEmpty {
+            let detailLabel = UILabel()
+            detailLabel.font = .systemFont(ofSize: 13)
+            detailLabel.textColor = .tertiaryLabel
+            detailLabel.textAlignment = .center
+            detailLabel.numberOfLines = 0
+            detailLabel.text = detail
+            statusStack.addArrangedSubview(detailLabel)
+        }
 
         if let retryTitle {
             var config = UIButton.Configuration.borderedProminent()
             config.title = retryTitle
-            stack.addArrangedSubview(UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
+            statusStack.addArrangedSubview(UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
                 self?.reload()
             }))
         }
 
-        let container = UIView()
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            stack.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-            stack.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor, constant: 24),
-            stack.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor, constant: -24)
-        ])
+        statusStack.isHidden = false
+    }
 
-        collectionView.backgroundView = container
+    private func hideCalendarMessage() {
+        loadingIndicator.stopAnimating()
+        collectionView.backgroundView = nil
+        statusStack.isHidden = true
+        statusStack.arrangedSubviews.forEach { view in
+            statusStack.removeArrangedSubview(view)
+            view.removeFromSuperview()
+        }
     }
 
     /// Загружает месяц и раскладывает игры по дням.
     /// Внутри дня — по популярности: постером клетки становится самая ожидаемая.
-    private func loadMonth(_ month: Date) async -> [Int: [GamesStorage]]? {
+    private func loadMonth(_ month: Date) async throws -> [Int: [GamesStorage]] {
         if let cached = monthCache[month] {
             return cached
         }
 
-        guard let interval = calendar.dateInterval(of: .month, for: month),
-              let games = try? await gameService.fetchGames(from: interval.start, to: interval.end) else {
-            return nil
+        guard let interval = calendar.dateInterval(of: .month, for: month) else {
+            throw CocoaError(.coderInvalidValue)
         }
+
+        let games = try await gameService.fetchGames(from: interval.start, to: interval.end)
 
         var byDay: [Int: [GamesStorage]] = [:]
         for game in games {
@@ -252,7 +310,7 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
             guard let neighbor = calendar.date(byAdding: .month, value: delta, to: month) else { continue }
 
             Task {
-                guard let byDay = await loadMonth(neighbor) else { return }
+                guard let byDay = try? await loadMonth(neighbor) else { return }
                 for games in byDay.values {
                     guard let candidates = games.first?.portraitPosterCandidates else { continue }
                     _ = await ImageCache.shared.loadImage(fromCandidates: candidates)

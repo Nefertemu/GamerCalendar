@@ -55,9 +55,10 @@ class GameCell: UITableViewCell {
         ])
         setBackdropHidden(true)
 
-        // «19 нояб. 2026 г. · через 4 мес.» — длинная строка, ужимаем при нужде.
+        // «19 Sep 2026 · 2 mo» — длинная строка, ужимаем при нужде.
+        releaseDateLabel.allowsDefaultTighteningForTruncation = true
         releaseDateLabel.adjustsFontSizeToFitWidth = true
-        releaseDateLabel.minimumScaleFactor = 0.75
+        releaseDateLabel.minimumScaleFactor = 0.6
     }
 
     override func prepareForReuse() {
@@ -89,9 +90,24 @@ class GameCell: UITableViewCell {
         if releaseDate <= .now {
             return "\(dateText) · \(String(localized: "Released!"))"
         }
-        // «Через 3 дня» — системный форматтер, локализуется сам.
-        // Narrow-стиль («через 4 мес.»), чтобы строка влезала в ячейку.
-        return "\(dateText) · \(releaseDate.formatted(.relative(presentation: .numeric, unitsStyle: .narrow)))"
+        return "\(dateText) · \(compactCountdownText(until: releaseDate))"
+    }
+
+    private func compactCountdownText(until releaseDate: Date) -> String {
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: .now)
+        let end = calendar.startOfDay(for: releaseDate)
+        let components = calendar.dateComponents([.year, .month, .day], from: start, to: end)
+
+        if let years = components.year, years > 0 {
+            return String(localized: "\(years) yr")
+        }
+        if let months = components.month, months > 0 {
+            return String(localized: "\(months) mo")
+        }
+
+        let days = max(components.day ?? 0, 1)
+        return String(localized: "\(days) d")
     }
 
     /// Рисует иконки платформ внутри лейбла через NSTextAttachment.
