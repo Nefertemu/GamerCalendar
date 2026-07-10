@@ -10,11 +10,13 @@ class GameDetailViewController: UIViewController {
     private let gameService: GameCatalogService
 
     private let contentStack = UIStackView()
+    private let detailsStack = UIStackView()
     private let coverImageView = UIImageView()
     private let spinner = UIActivityIndicatorView(style: .medium)
     private var screenshotURLs: [URL] = []
     private var similarGames: [GamesStorage] = []
     private var pageURL: URL?
+    private var isBuildingDetails = false
 
     init(game: GamesStorage, gameService: GameCatalogService) {
         self.game = game
@@ -135,6 +137,12 @@ class GameDetailViewController: UIViewController {
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentStack)
 
+        detailsStack.axis = .vertical
+        detailsStack.spacing = 16
+
+        let contentWidth = contentStack.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor)
+        contentWidth.priority = .defaultHigh
+
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -143,9 +151,11 @@ class GameDetailViewController: UIViewController {
 
             contentStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
             contentStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -24),
-            contentStack.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
-            contentStack.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
-            contentStack.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor)
+            contentStack.leadingAnchor.constraint(greaterThanOrEqualTo: scrollView.contentLayoutGuide.leadingAnchor),
+            contentStack.trailingAnchor.constraint(lessThanOrEqualTo: scrollView.contentLayoutGuide.trailingAnchor),
+            contentStack.centerXAnchor.constraint(equalTo: scrollView.frameLayoutGuide.centerXAnchor),
+            contentWidth,
+            contentStack.widthAnchor.constraint(lessThanOrEqualToConstant: 760)
         ])
     }
 
@@ -176,8 +186,8 @@ class GameDetailViewController: UIViewController {
             addSection(header: String(localized: "Platforms"), text: game.platforms)
         }
 
-        spinner.startAnimating()
-        contentStack.addArrangedSubview(spinner)
+        contentStack.addArrangedSubview(detailsStack)
+        showDetailsLoading()
     }
 
     // MARK: - Детали из API
@@ -185,23 +195,26 @@ class GameDetailViewController: UIViewController {
     private func loadDetails() {
         let gameID = game.id
         let gameService = gameService
+        showDetailsLoading()
 
         Task { [weak self] in
             do {
                 let details = try await gameService.fetchGameDetails(id: gameID)
                 guard let self else { return }
-                spinner.removeFromSuperview()
                 showDetails(details)
             } catch {
                 guard let self else { return }
-                spinner.removeFromSuperview()
-                showError()
+                showError(error)
                 print("RAWG details loading error:", error)
             }
         }
     }
 
     private func showDetails(_ details: GameDetails) {
+        clearDetails()
+        isBuildingDetails = true
+        defer { isBuildingDetails = false }
+
         pageURL = details.pageURL
         addRating(details)
 
@@ -289,7 +302,7 @@ class GameDetailViewController: UIViewController {
             scrollView.heightAnchor.constraint(equalTo: linksStack.heightAnchor)
         ])
 
-        contentStack.addArrangedSubview(scrollView)
+        addArranged(scrollView)
     }
 
     private func open(_ url: URL) {
@@ -345,7 +358,7 @@ class GameDetailViewController: UIViewController {
             scrollView.heightAnchor.constraint(equalTo: cardsStack.heightAnchor)
         ])
 
-        contentStack.addArrangedSubview(scrollView)
+        addArranged(scrollView)
     }
 
     private func makeSimilarGameCard(for game: GamesStorage, index: Int) -> UIView {
@@ -417,13 +430,51 @@ class GameDetailViewController: UIViewController {
         String(localized: "\(count) ratings")
     }
 
-    private func showError() {
-        let errorLabel = UILabel()
-        errorLabel.font = .systemFont(ofSize: 15)
-        errorLabel.textColor = .secondaryLabel
-        errorLabel.textAlignment = .center
-        errorLabel.text = String(localized: "Couldn't load details")
-        addPadded(errorLabel)
+    private func showDetailsLoading() {
+        clearDetails()
+        spinner.startAnimating()
+        detailsStack.addArrangedSubview(spinner)
+    }
+
+    private func showError(_ error: Error) {
+        clearDetails()
+
+        let titleLabel = UILabel()
+        titleLabel.font = .systemFont(ofSize: 15)
+        titleLabel.textColor = .secondaryLabel
+        titleLabel.textAlignment = .center
+        titleLabel.numberOfLines = 0
+        titleLabel.text = String(localized: "Couldn't load details")
+
+        let detailLabel = UILabel()
+        detailLabel.font = .systemFont(ofSize: 13)
+        detailLabel.textColor = .tertiaryLabel
+        detailLabel.textAlignment = .center
+        detailLabel.numberOfLines = 0
+        detailLabel.text = error.localizedDescription
+
+        var config = UIButton.Configuration.borderedProminent()
+        config.title = String(localized: "Retry")
+        let retryButton = UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
+            self?.loadDetails()
+        })
+
+        let stack = UIStackView(arrangedSubviews: [titleLabel, detailLabel, retryButton])
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.spacing = 8
+        stack.layoutMargins = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        stack.isLayoutMarginsRelativeArrangement = true
+
+        detailsStack.addArrangedSubview(stack)
+    }
+
+    private func clearDetails() {
+        spinner.stopAnimating()
+        detailsStack.arrangedSubviews.forEach { view in
+            detailsStack.removeArrangedSubview(view)
+            view.removeFromSuperview()
+        }
     }
 
     // MARK: - Секции
@@ -491,7 +542,7 @@ class GameDetailViewController: UIViewController {
             scrollView.heightAnchor.constraint(equalTo: screenshotsStack.heightAnchor)
         ])
 
-        contentStack.addArrangedSubview(scrollView)
+        addArranged(scrollView)
     }
 
     @objc private func screenshotTapped(_ gesture: UITapGestureRecognizer) {
@@ -516,7 +567,19 @@ class GameDetailViewController: UIViewController {
             subview.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16)
         ])
 
-        contentStack.addArrangedSubview(container)
+        if isBuildingDetails {
+            detailsStack.addArrangedSubview(container)
+        } else {
+            contentStack.addArrangedSubview(container)
+        }
+    }
+
+    private func addArranged(_ subview: UIView) {
+        if isBuildingDetails {
+            detailsStack.addArrangedSubview(subview)
+        } else {
+            contentStack.addArrangedSubview(subview)
+        }
     }
 
     /// Постер с выбором лучшего арта и запасными вариантами.

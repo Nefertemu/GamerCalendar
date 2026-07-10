@@ -71,11 +71,13 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
 
         monthLabel.font = .systemFont(ofSize: 20, weight: .semibold)
         monthLabel.textAlignment = .center
+        loadingIndicator.hidesWhenStopped = true
 
         // Стрелки прижаты к названию месяца, вся группа центрируется.
-        let headerContent = UIStackView(arrangedSubviews: [previousButton, monthLabel, nextButton])
+        let headerContent = UIStackView(arrangedSubviews: [previousButton, monthLabel, loadingIndicator, nextButton])
         headerContent.axis = .horizontal
-        headerContent.spacing = 20
+        headerContent.spacing = 16
+        headerContent.alignment = .center
 
         let header = UIView()
         headerContent.translatesAutoresizingMaskIntoConstraints = false
@@ -145,10 +147,16 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
         stack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(stack)
 
+        let stackWidth = stack.widthAnchor.constraint(equalTo: view.safeAreaLayoutGuide.widthAnchor, constant: -16)
+        stackWidth.priority = .defaultHigh
+
         NSLayoutConstraint.activate([
             stack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
-            stack.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 8),
-            stack.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -8),
+            stack.leadingAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 8),
+            stack.trailingAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -8),
+            stack.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+            stackWidth,
+            stack.widthAnchor.constraint(lessThanOrEqualToConstant: 720),
             stack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
     }
@@ -226,12 +234,10 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
 
     private func showLoadingState() {
         loadingIndicator.startAnimating()
-        collectionView.backgroundView = loadingIndicator
     }
 
     private func showCalendarMessage(text: String, detail: String? = nil, retryTitle: String? = nil) {
         loadingIndicator.stopAnimating()
-        collectionView.backgroundView = nil
         statusStack.arrangedSubviews.forEach { view in
             statusStack.removeArrangedSubview(view)
             view.removeFromSuperview()
@@ -269,7 +275,6 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
 
     private func hideCalendarMessage() {
         loadingIndicator.stopAnimating()
-        collectionView.backgroundView = nil
         statusStack.isHidden = true
         statusStack.arrangedSubviews.forEach { view in
             statusStack.removeArrangedSubview(view)

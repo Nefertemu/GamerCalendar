@@ -35,16 +35,7 @@ Built with **UIKit**, **SwiftUI (widget)**, **Swift Concurrency (async/await)**,
 
 1. Clone the repo and open `Gamer's Calendar.xcodeproj`.
 2. Create a Twitch application at [dev.twitch.tv/console](https://dev.twitch.tv/console) (IGDB uses Twitch OAuth) and copy its Client ID and Client Secret.
-3. Create `Gamer's Calendar/Secrets.swift` (the file is gitignored):
-
-```swift
-import Foundation
-
-enum Secrets {
-    static let igdbClientID = "your-client-id"
-    static let igdbClientSecret = "your-client-secret"
-}
-```
+3. Copy `Gamer's Calendar/Secrets.example.swift` to `Gamer's Calendar/Secrets.swift` and fill in the Twitch Client ID and Client Secret. `Secrets.swift` is gitignored; do not commit real credentials.
 
 4. Build and run.
 
