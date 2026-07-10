@@ -10,6 +10,7 @@ struct ReleaseActivityAttributes: ActivityAttributes {
 
     let gameTitle: String
     let releaseDate: Date
+    let compactCountdown: String
 }
 
 /// Запуск отсчёта до релиза на экране блокировки и в Dynamic Island.
@@ -23,13 +24,33 @@ enum ReleaseCountdown {
             return false
         }
 
-        let attributes = ReleaseActivityAttributes(gameTitle: game.gameTitle, releaseDate: releaseDate)
+        let attributes = ReleaseActivityAttributes(
+            gameTitle: game.gameTitle,
+            releaseDate: releaseDate,
+            compactCountdown: compactCountdownText(until: releaseDate)
+        )
         do {
             _ = try Activity.request(attributes: attributes, content: .init(state: .init(), staleDate: nil))
             return true
         } catch {
             return false
         }
+    }
+
+    private static func compactCountdownText(until releaseDate: Date) -> String {
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: .now)
+        let end = calendar.startOfDay(for: releaseDate)
+        let components = calendar.dateComponents([.year, .month, .day], from: start, to: end)
+
+        if let years = components.year, years > 0 {
+            return "\(years)y"
+        }
+        if let months = components.month, months > 0 {
+            return "\(months)mo"
+        }
+
+        return "\(max(components.day ?? 0, 1))d"
     }
 
 }

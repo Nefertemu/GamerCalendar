@@ -99,7 +99,7 @@ final class ReminderService {
 
     func removeReminder(for gameID: Int) {
         UNUserNotificationCenter.current()
-            .removePendingNotificationRequests(withIdentifiers: [notificationID(for: gameID)])
+            .removePendingNotificationRequests(withIdentifiers: notificationIDs(for: gameID))
         trackedGames = trackedGames.filter { $0.id != gameID }
     }
 
@@ -134,31 +134,36 @@ final class ReminderService {
         return changedIDs
     }
 
-    /// Ставит (или переставляет) уведомление на утро дня релиза.
+    /// Ставит (или переставляет) уведомления по пользовательским пресетам.
     private func scheduleNotification(for game: GamesStorage) async {
         guard let releaseDate = game.releaseDate else { return }
 
         let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: [notificationID(for: game.id)])
+        center.removePendingNotificationRequests(withIdentifiers: notificationIDs(for: game.id))
 
-        var components = Calendar.current.dateComponents([.year, .month, .day], from: releaseDate)
-        components.hour = 10
+        for leadDays in AppSettings.notificationLeadDays.sorted(by: >) {
+            guard let notificationDate = Calendar.current.date(byAdding: .day, value: -leadDays, to: releaseDate),
+                  notificationDate > .now else { continue }
 
-        let content = UNMutableNotificationContent()
-        content.title = game.gameTitle
-        content.body = String(localized: "Releases today!")
-        content.sound = .default
+            var components = Calendar.current.dateComponents([.year, .month, .day], from: notificationDate)
+            components.hour = 10
 
-        if let attachment = await imageAttachment(for: game) {
-            content.attachments = [attachment]
+            let content = UNMutableNotificationContent()
+            content.title = game.gameTitle
+            content.body = notificationBody(forLeadDays: leadDays)
+            content.sound = .default
+
+            if leadDays == 0, let attachment = await imageAttachment(for: game) {
+                content.attachments = [attachment]
+            }
+
+            let request = UNNotificationRequest(
+                identifier: notificationID(for: game.id, leadDays: leadDays),
+                content: content,
+                trigger: UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+            )
+            try? await center.add(request)
         }
-
-        let request = UNNotificationRequest(
-            identifier: notificationID(for: game.id),
-            content: content,
-            trigger: UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
-        )
-        try? await center.add(request)
     }
 
     /// Постер игры для уведомления: iOS требует файл на диске,
@@ -180,8 +185,23 @@ final class ReminderService {
         }
     }
 
-    private func notificationID(for gameID: Int) -> String {
-        "game-release-\(gameID)"
+    private func notificationBody(forLeadDays leadDays: Int) -> String {
+        switch leadDays {
+        case 0:
+            return String(localized: "Releases today!")
+        case 1:
+            return String(localized: "Releases tomorrow!")
+        default:
+            return String(localized: "Releases in \(leadDays) days")
+        }
+    }
+
+    private func notificationID(for gameID: Int, leadDays: Int) -> String {
+        "game-release-\(gameID)-\(leadDays)"
+    }
+
+    private func notificationIDs(for gameID: Int) -> [String] {
+        ["game-release-\(gameID)"] + [0, 1, 7, 14, 30].map { notificationID(for: gameID, leadDays: $0) }
     }
 
     // MARK: - Еженедельный дайджест
@@ -224,6 +244,11 @@ final class ReminderService {
             trigger: UNCalendarNotificationTrigger(dateMatching: mondayComponents, repeats: false)
         )
         center.add(request)
+    }
+
+    func cancelWeeklyDigest() {
+        UNUserNotificationCenter.current()
+            .removePendingNotificationRequests(withIdentifiers: ["weekly-digest"])
     }
 
 }

@@ -63,7 +63,7 @@ enum PlatformBadge: String, Codable, CaseIterable {
 }
 
 /// Подробности об игре с экрана деталей: описание, жанры, разработчики, скриншоты.
-struct GameDetails {
+struct GameDetails: Codable {
     let about: String
     let genres: String
     let developers: String
@@ -83,13 +83,13 @@ struct GameDetails {
 }
 
 /// Франшиза для перехода к списку всех игр серии.
-struct GameFranchise {
+struct GameFranchise: Codable {
     let id: Int
     let name: String
 }
 
 /// Внешняя ссылка с экрана игры: магазин или официальный сайт.
-struct GameLink {
+struct GameLink: Codable {
     let title: String
     let url: URL
 }

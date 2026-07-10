@@ -100,14 +100,14 @@ class GameCell: UITableViewCell {
         let components = calendar.dateComponents([.year, .month, .day], from: start, to: end)
 
         if let years = components.year, years > 0 {
-            return String(localized: "\(years) yr")
+            return "\(years)y"
         }
         if let months = components.month, months > 0 {
-            return String(localized: "\(months) mo")
+            return "\(months)mo"
         }
 
         let days = max(components.day ?? 0, 1)
-        return String(localized: "\(days) d")
+        return "\(days)d"
     }
 
     /// Рисует иконки платформ внутри лейбла через NSTextAttachment.

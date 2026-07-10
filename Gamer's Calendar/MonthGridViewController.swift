@@ -10,7 +10,9 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
 
     /// Первое число отображаемого месяца.
     private var month: Date {
-        didSet { reload() }
+        didSet {
+            reload(transition: month > oldValue ? .forward : .backward)
+        }
     }
 
     /// Игры месяца, сгруппированные по числу месяца.
@@ -27,6 +29,12 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
     private var loadTask: Task<Void, Never>?
     private let loadingIndicator = UIActivityIndicatorView(style: .medium)
     private let statusStack = UIStackView()
+
+    private enum MonthTransition {
+        case none
+        case forward
+        case backward
+    }
 
     private let monthFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -55,7 +63,7 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
         )
 
         setupLayout()
-        reload()
+        reload(transition: .none)
     }
 
     // MARK: - Вёрстка
@@ -182,7 +190,7 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
         }
     }
 
-    private func reload() {
+    private func reload(transition: MonthTransition) {
         loadTask?.cancel()
 
         let raw = monthFormatter.string(from: month)
@@ -193,7 +201,7 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
         if let cached = monthCache[month] {
             gamesByDay = cached
             updateCalendarState(for: cached)
-            collectionView.reloadData()
+            reloadCalendar(transition: transition)
             prefetchAdjacentMonths()
             return
         }
@@ -201,7 +209,7 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
         gamesByDay = [:]
         hideCalendarMessage()
         showLoadingState()
-        collectionView.reloadData()
+        reloadCalendar(transition: transition)
 
         loadTask = Task { [weak self] in
             guard let self else { return }
@@ -211,7 +219,7 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
                 guard !Task.isCancelled else { return }
                 gamesByDay = byDay
                 updateCalendarState(for: byDay)
-                collectionView.reloadData()
+                reloadCalendar(transition: .none)
                 prefetchAdjacentMonths()
             } catch {
                 guard !Task.isCancelled else { return }
@@ -222,6 +230,21 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
                 )
             }
         }
+    }
+
+    private func reloadCalendar(transition: MonthTransition) {
+        guard transition != .none else {
+            collectionView.reloadData()
+            return
+        }
+
+        let animation = CATransition()
+        animation.type = .push
+        animation.subtype = transition == .forward ? .fromRight : .fromLeft
+        animation.duration = 0.25
+        animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        collectionView.layer.add(animation, forKey: "monthPush")
+        collectionView.reloadData()
     }
 
     private func updateCalendarState(for gamesByDay: [Int: [GamesStorage]]) {
@@ -266,7 +289,7 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
             var config = UIButton.Configuration.borderedProminent()
             config.title = retryTitle
             statusStack.addArrangedSubview(UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
-                self?.reload()
+                self?.reload(transition: .none)
             }))
         }
 

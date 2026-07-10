@@ -226,6 +226,10 @@ class GameDetailViewController: UIViewController {
             addFranchiseButton(franchise)
         }
 
+        if let pageURL = details.pageURL {
+            addOpenPageButton(pageURL)
+        }
+
         if !details.about.isEmpty {
             addSection(header: String(localized: "About"), text: details.about)
         }
@@ -307,6 +311,18 @@ class GameDetailViewController: UIViewController {
 
     private func open(_ url: URL) {
         present(SFSafariViewController(url: url), animated: true)
+    }
+
+    private func addOpenPageButton(_ url: URL) {
+        var config = UIButton.Configuration.bordered()
+        config.title = String(localized: "Open on IGDB")
+        config.image = UIImage(systemName: "safari")
+        config.imagePadding = 8
+
+        let button = UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
+            self?.open(url)
+        })
+        addPadded(button)
     }
 
     private func addFranchiseButton(_ franchise: GameFranchise) {

@@ -11,7 +11,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate, UITabBarControllerDeleg
 
     var window: UIWindow?
 
-    private let gameService: GameCatalogService = IGDBService()
+    private let gameService: GameCatalogService = CachedGameCatalogService()
 
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
@@ -20,21 +20,21 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate, UITabBarControllerDeleg
         // Корень приложения — таб-бар: лента релизов, календарная сетка
         // и отслеживаемые игры.
         // Grouped-стиль: заголовки месяцев не прилипают к навбару при скролле.
-        let feedViewController = TableViewController(style: .grouped)
+        let feedViewController = TableViewController(style: .grouped, gameService: gameService)
         feedViewController.tabBarItem = UITabBarItem(
             title: String(localized: "Feed"),
             image: UIImage(systemName: "list.bullet.below.rectangle"),
             tag: 0
         )
 
-        let gridViewController = MonthGridViewController()
+        let gridViewController = MonthGridViewController(gameService: gameService)
         gridViewController.tabBarItem = UITabBarItem(
             title: String(localized: "Calendar"),
             image: UIImage(systemName: "calendar"),
             tag: 1
         )
 
-        let watchlistViewController = WatchlistViewController()
+        let watchlistViewController = WatchlistViewController(gameService: gameService)
         watchlistViewController.tabBarItem = UITabBarItem(
             title: String(localized: "Watchlist"),
             image: UIImage(systemName: "bell"),
@@ -43,10 +43,18 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate, UITabBarControllerDeleg
 
         let tabBarController = UITabBarController()
         tabBarController.delegate = self
+        let settingsViewController = SettingsViewController()
+        settingsViewController.tabBarItem = UITabBarItem(
+            title: String(localized: "Settings"),
+            image: UIImage(systemName: "gearshape"),
+            tag: 3
+        )
+
         tabBarController.viewControllers = [
             UINavigationController(rootViewController: feedViewController),
             UINavigationController(rootViewController: gridViewController),
-            UINavigationController(rootViewController: watchlistViewController)
+            UINavigationController(rootViewController: watchlistViewController),
+            UINavigationController(rootViewController: settingsViewController)
         ]
 
         let window = UIWindow(windowScene: windowScene)
@@ -61,6 +69,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate, UITabBarControllerDeleg
         if let userActivity = connectionOptions.userActivities.first {
             self.scene(scene, continue: userActivity)
         }
+
+        showOnboardingIfNeeded(from: tabBarController)
     }
 
     // MARK: - Deep links (виджет, шаринг) и Spotlight
@@ -94,6 +104,14 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate, UITabBarControllerDeleg
         }
     }
 
+    private func showOnboardingIfNeeded(from tabBarController: UITabBarController) {
+        guard !AppSettings.didShowOnboarding else { return }
+
+        let onboarding = OnboardingViewController()
+        onboarding.modalPresentationStyle = .formSheet
+        tabBarController.present(onboarding, animated: true)
+    }
+
     // MARK: - UITabBarControllerDelegate
 
     func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
@@ -117,7 +135,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate, UITabBarControllerDeleg
     func sceneDidBecomeActive(_ scene: UIScene) {
         // Пересчитываем еженедельный дайджест: список отслеживаемых игр
         // и их даты могли измениться.
-        ReminderService.shared.scheduleWeeklyDigest()
+        if AppSettings.weeklyDigestEnabled {
+            ReminderService.shared.scheduleWeeklyDigest()
+        }
     }
 
     func sceneWillResignActive(_ scene: UIScene) {

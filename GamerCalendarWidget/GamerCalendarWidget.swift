@@ -12,6 +12,7 @@ struct ReleaseActivityAttributes: ActivityAttributes {
 
     let gameTitle: String
     let releaseDate: Date
+    let compactCountdown: String
 }
 
 @available(iOS 16.2, *)
@@ -56,8 +57,11 @@ struct ReleaseLiveActivity: Widget {
                 Image(systemName: "gamecontroller.fill")
                     .foregroundStyle(.orange)
             } compactTrailing: {
-                Text(context.attributes.releaseDate, style: .timer)
-                    .frame(maxWidth: 60)
+                Text(context.attributes.compactCountdown)
+                    .font(.caption2.bold())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .frame(maxWidth: 34)
                     .foregroundStyle(.orange)
                     .monospacedDigit()
             } minimal: {
