@@ -34,6 +34,13 @@ struct GamesStorage: Codable {
         guard let coverURL else { return posterCandidates }
         return [coverURL] + posterCandidates.filter { $0 != coverURL }
     }
+
+    /// Альбомные кандидаты для широких превью в списках.
+    var landscapePosterCandidates: [URL] {
+        var seen = Set<URL>()
+        let candidates = (artworkURLs ?? []) + posterCandidates.filter { $0 != coverURL }
+        return candidates.filter { seen.insert($0).inserted }
+    }
 }
 
 /// Платформа в виде иконки SF Symbols для ячейки списка.
@@ -158,7 +165,12 @@ final class ImageCache {
     private init() {}
 
     func image(for url: URL) -> UIImage? {
-        cache.object(forKey: url as NSURL)
+        guard let image = cache.object(forKey: url as NSURL) else { return nil }
+        if Self.isLikelyPlaceholder(image) {
+            cache.removeObject(forKey: url as NSURL)
+            return nil
+        }
+        return image
     }
 
     func loadImage(from url: URL) async -> UIImage? {
@@ -179,7 +191,7 @@ final class ImageCache {
     /// по весу файл (HEAD-запросы): детализированный постер с логотипом
     /// весит в разы больше пустышек и тёмных заглушек. Фолбэки — скриншот
     /// и обложка через обычную цепочку кандидатов.
-    func loadPoster(for game: GamesStorage) async -> UIImage? {
+    func loadPoster(for game: GamesStorage, includesPortraitFallback: Bool = true) async -> UIImage? {
         let artworks = game.artworkURLs ?? []
 
         // Выбранный ранее арт уже в памяти — берём его.
@@ -194,7 +206,10 @@ final class ImageCache {
             return image
         }
 
-        return await loadImage(fromCandidates: game.posterCandidates)
+        let fallbackCandidates = includesPortraitFallback
+            ? game.posterCandidates
+            : game.posterCandidates.filter { $0 != game.coverURL }
+        return await loadImage(fromCandidates: fallbackCandidates)
     }
 
     /// URL самого детализированного арта. CDN IGDB не отдаёт размер файла
@@ -232,8 +247,8 @@ final class ImageCache {
     private static func contentScore(ofThumb data: Data) -> Int {
         guard let cgImage = UIImage(data: data)?.cgImage else { return 0 }
 
-        let width = 24
-        let height = 14
+        let width = 48
+        let height = 28
         var pixels = [UInt8](repeating: 0, count: width * height * 4)
 
         guard let context = CGContext(
@@ -272,13 +287,95 @@ final class ImageCache {
 
             guard let (data, _) = try? await session.data(from: url),
                   data.count > 6000,
-                  let image = UIImage(data: data) else { continue }
+                  let image = UIImage(data: data),
+                  !Self.isLikelyPlaceholder(image) else { continue }
 
             cache.setObject(image, forKey: url as NSURL)
             return image
         }
 
         return nil
+    }
+
+    /// Первая валидная альбомная картинка. Используется там, где портретная
+    /// обложка с размытыми полями выглядит как сломанный белый прямоугольник.
+    func loadLandscapeImage(fromCandidates urls: [URL]) async -> UIImage? {
+        for url in urls {
+            if let cached = image(for: url), Self.isLandscape(cached) {
+                return cached
+            }
+
+            guard let (data, _) = try? await session.data(from: url),
+                  data.count > 6000,
+                  let image = UIImage(data: data),
+                  Self.isLandscape(image),
+                  !Self.isLikelyPlaceholder(image) else { continue }
+
+            cache.setObject(image, forKey: url as NSURL)
+            return image
+        }
+
+        return nil
+    }
+
+    private static func isLandscape(_ image: UIImage) -> Bool {
+        image.size.width / max(image.size.height, 1) >= 1.25
+    }
+
+    private static func isLikelyPlaceholder(_ image: UIImage) -> Bool {
+        guard let cgImage = image.cgImage else { return false }
+
+        let width = 48
+        let height = 28
+        var pixels = [UInt8](repeating: 0, count: width * height * 4)
+
+        guard let context = CGContext(
+            data: &pixels,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: width * 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return false }
+
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+
+        var brightNeutralCount = 0
+        var centerBrightNeutralCount = 0
+        var centerPixelCount = 0
+        var brightNeutralByColumn = [Int](repeating: 0, count: width)
+        for index in stride(from: 0, to: pixels.count, by: 4) {
+            let pixel = index / 4
+            let x = pixel % width
+            let red = Int(pixels[index])
+            let green = Int(pixels[index + 1])
+            let blue = Int(pixels[index + 2])
+            let maxChannel = max(red, green, blue)
+            let minChannel = min(red, green, blue)
+            let isBrightNeutral = maxChannel > 205 && (maxChannel - minChannel) < 45
+            let isCenterStrip = x >= 14 && x <= 33
+
+            if isBrightNeutral {
+                brightNeutralCount += 1
+                brightNeutralByColumn[x] += 1
+            }
+            if isCenterStrip {
+                centerPixelCount += 1
+                if isBrightNeutral {
+                    centerBrightNeutralCount += 1
+                }
+            }
+        }
+
+        let brightNeutralFraction = Double(brightNeutralCount) / Double(width * height)
+        let centerBrightNeutralFraction = Double(centerBrightNeutralCount) / Double(max(centerPixelCount, 1))
+        let centerColumns = brightNeutralByColumn[14...33]
+        let solidCenterColumns = centerColumns.filter { Double($0) / Double(height) > 0.82 }.count
+
+        // IGDB sometimes returns placeholder covers: either almost all white,
+        // or a solid bright vertical strip with muted side colors.
+        return brightNeutralFraction > 0.58 || centerBrightNeutralFraction > 0.52 || solidCenterColumns >= 7
     }
 }
 

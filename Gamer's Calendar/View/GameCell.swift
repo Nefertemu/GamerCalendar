@@ -68,13 +68,13 @@ class GameCell: UITableViewCell {
         showPlaceholder()
     }
 
-    func configure(with game: GamesStorage, showCountdown: Bool = false, dateChanged: Bool = false) {
+    func configure(with game: GamesStorage, showCountdown: Bool = false, dateChanged: Bool = false, prefersPortraitPoster: Bool = false, excludesPortraitFallback: Bool = false) {
         gameTitleLabel.text = game.gameTitle
         releaseDateLabel.text = releaseDateText(for: game.releaseDate, showCountdown: showCountdown, dateChanged: dateChanged)
         releaseDateLabel.textColor = dateChanged ? .systemOrange : .secondaryLabel
 
         showPlatformIcons(game.platformBadges)
-        loadPoster(for: game)
+        loadPoster(for: game, prefersPortraitPoster: prefersPortraitPoster, excludesPortraitFallback: excludesPortraitFallback)
     }
 
     private func releaseDateText(for releaseDate: Date?, showCountdown: Bool, dateChanged: Bool) -> String {
@@ -139,9 +139,34 @@ class GameCell: UITableViewCell {
 
     // MARK: - Постер
 
-    private func loadPoster(for game: GamesStorage) {
+    private func loadPoster(for game: GamesStorage, prefersPortraitPoster: Bool, excludesPortraitFallback: Bool) {
         currentGameID = game.id
         showPlaceholder()
+
+        if prefersPortraitPoster {
+            for url in game.portraitPosterCandidates {
+                if let cached = ImageCache.shared.image(for: url) {
+                    apply(cached)
+                    return
+                }
+            }
+
+            Task {
+                guard let image = await ImageCache.shared.loadImage(fromCandidates: game.portraitPosterCandidates) else { return }
+                guard currentGameID == game.id else { return }
+                apply(image)
+            }
+            return
+        }
+
+        if excludesPortraitFallback {
+            Task {
+                guard let image = await ImageCache.shared.loadPoster(for: game, includesPortraitFallback: false) else { return }
+                guard currentGameID == game.id else { return }
+                apply(image)
+            }
+            return
+        }
 
         // Мгновенный путь: выбранный ранее арт уже в памяти.
         for url in game.artworkURLs ?? [] {
@@ -194,7 +219,7 @@ class GameCell: UITableViewCell {
     private func showPlaceholder() {
         gameImageView.contentMode = .scaleAspectFill
         gameImageView.backgroundColor = .secondarySystemFill
-        gameImageView.image = UIImage(systemName: "photo")
+        gameImageView.image = nil
         setBackdropHidden(true)
     }
 

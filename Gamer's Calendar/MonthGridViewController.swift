@@ -413,7 +413,7 @@ class DayGamesViewController: UITableViewController {
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "GameCell", for: indexPath) as! GameCell
-        cell.configure(with: games[indexPath.row])
+        cell.configure(with: games[indexPath.row], excludesPortraitFallback: true)
         return cell
     }
 
