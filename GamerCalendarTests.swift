@@ -228,6 +228,10 @@ private struct MockGameCatalogService: GameCatalogService {
             trailerURL: nil,
             links: [],
             similarGames: [],
+            releaseDates: [],
+            releaseAccuracy: .unknown,
+            preorderAvailable: false,
+            updateBadges: [],
             franchise: nil,
             pageURL: nil
         )

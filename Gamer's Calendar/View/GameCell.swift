@@ -14,6 +14,8 @@ class GameCell: UITableViewCell {
     @IBOutlet var releaseDateLabel: UILabel!
     @IBOutlet var platformsLabel: UILabel!
 
+    private let statusLabel = UILabel()
+
     /// Подложка для портретных постеров: та же картинка на весь слот + блюр.
     private let backdropImageView = UIImageView()
     private let backdropBlurView = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterial))
@@ -59,19 +61,35 @@ class GameCell: UITableViewCell {
         releaseDateLabel.allowsDefaultTighteningForTruncation = true
         releaseDateLabel.adjustsFontSizeToFitWidth = true
         releaseDateLabel.minimumScaleFactor = 0.6
+
+        statusLabel.font = .systemFont(ofSize: 13, weight: .medium)
+        statusLabel.textColor = .systemOrange
+        statusLabel.numberOfLines = 1
+        statusLabel.lineBreakMode = .byTruncatingTail
+        statusLabel.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(statusLabel)
+
+        NSLayoutConstraint.activate([
+            statusLabel.leadingAnchor.constraint(equalTo: platformsLabel.leadingAnchor),
+            statusLabel.trailingAnchor.constraint(equalTo: platformsLabel.trailingAnchor),
+            statusLabel.topAnchor.constraint(equalTo: platformsLabel.bottomAnchor, constant: 2)
+        ])
     }
 
     override func prepareForReuse() {
         super.prepareForReuse()
 
         currentGameID = nil
+        statusLabel.text = nil
         showPlaceholder()
     }
 
-    func configure(with game: GamesStorage, showCountdown: Bool = false, dateChanged: Bool = false, prefersPortraitPoster: Bool = false, excludesPortraitFallback: Bool = false) {
+    func configure(with game: GamesStorage, showCountdown: Bool = false, dateChanged: Bool = false, statusBadge: String? = nil, prefersPortraitPoster: Bool = false, excludesPortraitFallback: Bool = false) {
         gameTitleLabel.text = game.gameTitle
         releaseDateLabel.text = releaseDateText(for: game.releaseDate, showCountdown: showCountdown, dateChanged: dateChanged)
         releaseDateLabel.textColor = dateChanged ? .systemOrange : .secondaryLabel
+        statusLabel.text = statusBadge?.trimmingCharacters(in: .whitespacesAndNewlines)
+        statusLabel.isHidden = (statusLabel.text ?? "").isEmpty
 
         showPlatformIcons(game.platformBadges)
         loadPoster(for: game, prefersPortraitPoster: prefersPortraitPoster, excludesPortraitFallback: excludesPortraitFallback)

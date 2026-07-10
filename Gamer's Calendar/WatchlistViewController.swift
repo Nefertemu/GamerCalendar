@@ -10,6 +10,8 @@ class WatchlistViewController: UITableViewController {
 
     /// Игры, у которых при последней сверке с IGDB изменилась дата релиза.
     private var changedGameIDs: Set<Int> = []
+    private var updatesByGameID: [Int: [GameUpdateBadge]] = [:]
+    private var updatesTask: Task<Void, Never>?
 
     init(gameService: GameCatalogService = IGDBService()) {
         self.gameService = gameService
@@ -28,7 +30,7 @@ class WatchlistViewController: UITableViewController {
         navigationItem.title = String(localized: "Watchlist")
         navigationController?.navigationBar.prefersLargeTitles = true
 
-        tableView.rowHeight = 112
+        tableView.rowHeight = 124
 
         let cellTypeNib = UINib(nibName: "GameCell", bundle: nil)
         tableView.register(cellTypeNib, forCellReuseIdentifier: "GameCell")
@@ -39,6 +41,7 @@ class WatchlistViewController: UITableViewController {
         // Колокольчик могли переключить на экране игры — перечитываем список.
         reload()
         refreshReleaseDates()
+        refreshWatchlistUpdates()
     }
 
     /// Даты релизов часто переносят — сверяем сохранённые игры с IGDB.
@@ -55,6 +58,38 @@ class WatchlistViewController: UITableViewController {
         games = ReminderService.shared.trackedGames
         tableView.reloadData()
         updateEmptyState()
+    }
+
+    private func refreshWatchlistUpdates() {
+        updatesTask?.cancel()
+
+        let games = games
+        let gameService = gameService
+
+        updatesTask = Task { [weak self] in
+            var updates: [Int: [GameUpdateBadge]] = [:]
+
+            await withTaskGroup(of: (Int, [GameUpdateBadge]).self) { group in
+                for game in games {
+                    group.addTask {
+                        guard let details = try? await gameService.fetchGameDetails(id: game.id) else {
+                            return (game.id, [])
+                        }
+                        return (game.id, details.updateBadges)
+                    }
+                }
+
+                for await result in group where !result.1.isEmpty {
+                    updates[result.0] = result.1
+                }
+            }
+
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                self?.updatesByGameID = updates
+                self?.tableView.reloadData()
+            }
+        }
     }
 
     private func updateEmptyState() {
@@ -92,7 +127,12 @@ class WatchlistViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let game = games[indexPath.row]
         let cell = tableView.dequeueReusableCell(withIdentifier: "GameCell", for: indexPath) as! GameCell
-        cell.configure(with: game, showCountdown: true, dateChanged: changedGameIDs.contains(game.id))
+        cell.configure(
+            with: game,
+            showCountdown: true,
+            dateChanged: changedGameIDs.contains(game.id),
+            statusBadge: updatesByGameID[game.id]?.first?.title
+        )
         return cell
     }
 

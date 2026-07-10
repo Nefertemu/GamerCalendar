@@ -77,7 +77,7 @@ class TableViewController: UITableViewController {
         navigationItem.title = String(localized: "Upcoming Games")
         navigationController?.navigationBar.prefersLargeTitles = true
 
-        tableView.rowHeight = 112
+        tableView.rowHeight = 124
         tableView.backgroundColor = .systemBackground
 
         let cellTypeNib = UINib(nibName: "GameCell", bundle: nil)

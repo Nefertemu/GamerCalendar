@@ -217,6 +217,7 @@ class GameDetailViewController: UIViewController {
 
         pageURL = details.pageURL
         addRating(details)
+        addReleaseStatus(details)
 
         if let trailerURL = details.trailerURL {
             addTrailerButton(trailerURL)
@@ -232,6 +233,14 @@ class GameDetailViewController: UIViewController {
 
         if !details.about.isEmpty {
             addSection(header: String(localized: "About"), text: details.about)
+        }
+
+        if !details.updateBadges.isEmpty {
+            addUpdates(details.updateBadges)
+        }
+
+        if !details.releaseDates.isEmpty {
+            addPlatformReleaseDates(details.releaseDates)
         }
 
         if !details.genres.isEmpty {
@@ -337,6 +346,85 @@ class GameDetailViewController: UIViewController {
             navigationController?.pushViewController(franchiseController, animated: true)
         })
         addPadded(button)
+    }
+
+    private func addReleaseStatus(_ details: GameDetails) {
+        var lines = [String(localized: "Release confidence: \(details.releaseAccuracy.title)")]
+        if details.preorderAvailable {
+            lines.append(String(localized: "Preorder available"))
+        }
+        addSection(header: String(localized: "Release Status"), text: lines.joined(separator: "\n"))
+    }
+
+    private func addUpdates(_ badges: [GameUpdateBadge]) {
+        let text = badges.map { badge in
+            guard !badge.detail.isEmpty else { return "• \(badge.title)" }
+            return "• \(badge.title): \(badge.detail)"
+        }.joined(separator: "\n")
+
+        addSection(header: String(localized: "Latest Updates"), text: text)
+    }
+
+    private func addPlatformReleaseDates(_ dates: [PlatformReleaseDate]) {
+        let groups = groupedReleaseDates(dates)
+        let text = groups.prefix(8).map { group in
+            var labelParts = [group.displayDate]
+
+            if group.regionName != String(localized: "Worldwide") {
+                labelParts.append(group.regionName)
+            }
+            if let status = group.status, !status.isEmpty {
+                labelParts.append(status)
+            }
+            if group.accuracy != .exact {
+                labelParts.append(group.accuracy.title)
+            }
+
+            let platforms = group.platforms.sorted().joined(separator: ", ")
+            return "• \(labelParts.joined(separator: " · ")): \(platforms)"
+        }.joined(separator: "\n")
+
+        addSection(header: String(localized: "Platform Release Dates"), text: text)
+    }
+
+    private struct ReleaseDateGroup {
+        let displayDate: String
+        let regionName: String
+        let status: String?
+        let accuracy: ReleaseAccuracy
+        let timestamp: Date?
+        var platforms: Set<String>
+    }
+
+    private func groupedReleaseDates(_ dates: [PlatformReleaseDate]) -> [ReleaseDateGroup] {
+        var groups: [String: ReleaseDateGroup] = [:]
+
+        for date in dates {
+            let key = [
+                date.displayDate,
+                date.regionName,
+                date.status ?? "",
+                date.accuracy.rawValue
+            ].joined(separator: "|")
+
+            if var group = groups[key] {
+                group.platforms.insert(date.platformName)
+                groups[key] = group
+            } else {
+                groups[key] = ReleaseDateGroup(
+                    displayDate: date.displayDate,
+                    regionName: date.regionName,
+                    status: date.status,
+                    accuracy: date.accuracy,
+                    timestamp: date.timestamp,
+                    platforms: [date.platformName]
+                )
+            }
+        }
+
+        return groups.values.sorted {
+            ($0.timestamp ?? .distantFuture) < ($1.timestamp ?? .distantFuture)
+        }
     }
 
     // MARK: - Похожие игры

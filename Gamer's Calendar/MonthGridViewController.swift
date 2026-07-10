@@ -421,7 +421,7 @@ class DayGamesViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        tableView.rowHeight = 112
+        tableView.rowHeight = 124
         tableView.register(UINib(nibName: "GameCell", bundle: nil), forCellReuseIdentifier: "GameCell")
 
         navigationItem.rightBarButtonItem = UIBarButtonItem(

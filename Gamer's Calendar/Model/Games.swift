@@ -76,6 +76,10 @@ struct GameDetails: Codable {
     /// Магазины и официальный сайт.
     let links: [GameLink]
     let similarGames: [GamesStorage]
+    let releaseDates: [PlatformReleaseDate]
+    let releaseAccuracy: ReleaseAccuracy
+    let preorderAvailable: Bool
+    let updateBadges: [GameUpdateBadge]
     /// Первая франшиза игры, если есть.
     let franchise: GameFranchise?
     /// Страница игры на igdb.com — для шаринга.
@@ -92,6 +96,47 @@ struct GameFranchise: Codable {
 struct GameLink: Codable {
     let title: String
     let url: URL
+}
+
+/// Дата релиза с точностью, которую реально отдал IGDB.
+struct PlatformReleaseDate: Codable {
+    let platformName: String
+    let regionName: String
+    let displayDate: String
+    let accuracy: ReleaseAccuracy
+    let status: String?
+    let timestamp: Date?
+}
+
+enum ReleaseAccuracy: String, Codable {
+    case exact
+    case month
+    case year
+    case quarter
+    case tba
+    case unknown
+
+    var title: String {
+        switch self {
+        case .exact:
+            return String(localized: "Exact date")
+        case .month:
+            return String(localized: "Month announced")
+        case .year:
+            return String(localized: "Year announced")
+        case .quarter:
+            return String(localized: "Quarter announced")
+        case .tba:
+            return "TBA"
+        case .unknown:
+            return String(localized: "Unknown date")
+        }
+    }
+}
+
+struct GameUpdateBadge: Codable {
+    let title: String
+    let detail: String
 }
 
 /// Жанры IGDB для фильтра списка (raw value — id из справочника genres,
@@ -435,6 +480,8 @@ struct IGDBGameDetail: Decodable {
     let genres: [IGDBNamed]?
     let involvedCompanies: [IGDBInvolvedCompany]?
     let screenshots: [IGDBImage]?
+    let firstReleaseDate: TimeInterval?
+    let releaseDates: [IGDBReleaseDate]?
     let totalRating: Double?
     let totalRatingCount: Int?
     let videos: [IGDBVideo]?
@@ -455,6 +502,28 @@ struct IGDBVideo: Decodable {
 struct IGDBWebsite: Decodable {
     let url: String
     let type: Int?
+}
+
+struct IGDBReleaseDate: Decodable {
+    let category: Int?
+    let date: TimeInterval?
+    let human: String?
+    let m: Int?
+    let y: Int?
+    let d: Int?
+    let platform: IGDBPlatform?
+    let status: IGDBNamed?
+    let dateFormat: IGDBDateFormat?
+    let releaseRegion: IGDBReleaseRegion?
+    let region: Int?
+}
+
+struct IGDBDateFormat: Decodable {
+    let format: String?
+}
+
+struct IGDBReleaseRegion: Decodable {
+    let region: String?
 }
 
 struct IGDBInvolvedCompany: Decodable {
@@ -643,7 +712,7 @@ final class IGDBService: GameCatalogService {
 
     func fetchGameDetails(id: Int) async throws -> GameDetails {
         let query = """
-        fields summary, url, genres.name, involved_companies.company.name, involved_companies.developer, screenshots.image_id, total_rating, total_rating_count, videos.video_id, websites.url, websites.type, franchises.name, similar_games.name, similar_games.first_release_date, similar_games.cover.image_id, similar_games.artworks.image_id, similar_games.screenshots.image_id, similar_games.platforms.name, similar_games.platforms.platform_family;
+        fields summary, url, first_release_date, genres.name, involved_companies.company.name, involved_companies.developer, screenshots.image_id, release_dates.date, release_dates.human, release_dates.y, release_dates.m, release_dates.d, release_dates.category, release_dates.platform.name, release_dates.platform.platform_family, release_dates.status.name, release_dates.date_format.format, release_dates.release_region.region, release_dates.region, total_rating, total_rating_count, videos.video_id, websites.url, websites.type, franchises.name, similar_games.name, similar_games.first_release_date, similar_games.cover.image_id, similar_games.artworks.image_id, similar_games.screenshots.image_id, similar_games.platforms.name, similar_games.platforms.platform_family;
         where id = \(id);
         """
 
@@ -651,6 +720,9 @@ final class IGDBService: GameCatalogService {
         guard let detail = try decoder.decode([IGDBGameDetail].self, from: data).first else {
             throw URLError(.resourceUnavailable)
         }
+
+        let links = links(from: detail.websites)
+        let releaseDates = platformReleaseDates(from: detail.releaseDates)
 
         return GameDetails(
             about: detail.summary ?? "",
@@ -664,11 +736,173 @@ final class IGDBService: GameCatalogService {
             rating: (detail.totalRating ?? 0) / 20,
             ratingsCount: detail.totalRatingCount ?? 0,
             trailerURL: detail.videos?.first.flatMap { URL(string: "https://www.youtube.com/watch?v=\($0.videoId)") },
-            links: links(from: detail.websites),
+            links: links,
             similarGames: detail.similarGames?.map(gamesStorage(from:)) ?? [],
+            releaseDates: releaseDates,
+            releaseAccuracy: releaseAccuracy(from: detail.releaseDates, fallbackDate: detail.firstReleaseDate),
+            preorderAvailable: hasPreorderAvailable(links: links, firstReleaseDate: detail.firstReleaseDate),
+            updateBadges: updateBadges(for: detail, releaseDates: releaseDates, links: links),
             franchise: detail.franchises?.first.map { GameFranchise(id: $0.id, name: $0.name) },
             pageURL: detail.url.flatMap(URL.init(string:))
         )
+    }
+
+    /// Даты по платформам/регионам с сохранением точности даты из IGDB.
+    private func platformReleaseDates(from releaseDates: [IGDBReleaseDate]?) -> [PlatformReleaseDate] {
+        var seen = Set<String>()
+
+        return (releaseDates ?? [])
+            .sorted { lhs, rhs in
+                (lhs.date ?? .greatestFiniteMagnitude) < (rhs.date ?? .greatestFiniteMagnitude)
+            }
+            .compactMap { releaseDate in
+                let platform = releaseDate.platform?.name ?? String(localized: "Unknown platform")
+                let region = releaseRegionName(from: releaseDate)
+                let accuracy = releaseAccuracy(from: releaseDate)
+                let displayDate = displayDate(for: releaseDate, accuracy: accuracy)
+                let key = "\(platform)|\(region)|\(displayDate)"
+
+                guard seen.insert(key).inserted else { return nil }
+
+                return PlatformReleaseDate(
+                    platformName: platform,
+                    regionName: region,
+                    displayDate: displayDate,
+                    accuracy: accuracy,
+                    status: releaseDate.status?.name,
+                    timestamp: releaseDate.date.map { Date(timeIntervalSince1970: $0) }
+                )
+            }
+    }
+
+    private func releaseAccuracy(from releaseDates: [IGDBReleaseDate]?, fallbackDate: TimeInterval?) -> ReleaseAccuracy {
+        let accuracies = (releaseDates ?? []).map(releaseAccuracy(from:))
+        if accuracies.contains(.exact) { return .exact }
+        if accuracies.contains(.month) { return .month }
+        if accuracies.contains(.quarter) { return .quarter }
+        if accuracies.contains(.year) { return .year }
+        if accuracies.contains(.tba) { return .tba }
+        return fallbackDate == nil ? .unknown : .exact
+    }
+
+    private func releaseAccuracy(from releaseDate: IGDBReleaseDate) -> ReleaseAccuracy {
+        let format = releaseDate.dateFormat?.format?.lowercased() ?? ""
+        let human = releaseDate.human?.lowercased() ?? ""
+
+        if format.contains("tbd") || format.contains("tba") { return .tba }
+        if format.contains("quarter") || format.contains("q") { return .quarter }
+        if format.contains("yyyy") && format.contains("mmmm") && format.contains("dd") { return .exact }
+        if format.contains("dd") { return .exact }
+        if format.contains("yyyy") && format.contains("mmmm") { return .month }
+        if format == "yyyy" { return .year }
+
+        switch releaseDate.category {
+        case 0: return .exact
+        case 1: return .month
+        case 2: return .year
+        case 3, 4, 5, 6: return .quarter
+        case 7: return .tba
+        default:
+            if releaseDate.d != nil || releaseDate.date != nil || human.range(of: #"\d{1,2}"#, options: .regularExpression) != nil {
+                return .exact
+            }
+            if releaseDate.m != nil { return .month }
+            if releaseDate.y != nil { return .year }
+            return .unknown
+        }
+    }
+
+    private func displayDate(for releaseDate: IGDBReleaseDate, accuracy: ReleaseAccuracy) -> String {
+        if accuracy == .tba {
+            return "TBA"
+        }
+        if let human = releaseDate.human, !human.isEmpty {
+            return human
+        }
+        if let date = releaseDate.date {
+            return Date(timeIntervalSince1970: date).formatted(date: .abbreviated, time: .omitted)
+        }
+        if let year = releaseDate.y {
+            if accuracy == .quarter, let quarter = quarterName(for: releaseDate.category) {
+                return "\(quarter) \(year)"
+            }
+            if let month = releaseDate.m {
+                let symbols = DateFormatter().monthSymbols ?? []
+                if symbols.indices.contains(month - 1) {
+                    return "\(symbols[month - 1]) \(year)"
+                }
+            }
+            return String(year)
+        }
+        return String(localized: "Unknown date")
+    }
+
+    private func quarterName(for category: Int?) -> String? {
+        switch category {
+        case 3: return "Q1"
+        case 4: return "Q2"
+        case 5: return "Q3"
+        case 6: return "Q4"
+        default: return nil
+        }
+    }
+
+    private func releaseRegionName(from releaseDate: IGDBReleaseDate) -> String {
+        if let region = releaseDate.releaseRegion?.region, !region.isEmpty {
+            return region
+        }
+
+        switch releaseDate.region {
+        case 1: return "Europe"
+        case 2: return "North America"
+        case 3: return "Australia"
+        case 4: return "New Zealand"
+        case 5: return "Japan"
+        case 6: return "China"
+        case 7: return "Asia"
+        case 8: return String(localized: "Worldwide")
+        case 9: return "Korea"
+        case 10: return "Brazil"
+        default: return String(localized: "Worldwide")
+        }
+    }
+
+    private func hasPreorderAvailable(links: [GameLink], firstReleaseDate: TimeInterval?) -> Bool {
+        guard let firstReleaseDate, Date(timeIntervalSince1970: firstReleaseDate) > .now else {
+            return false
+        }
+        return links.contains { link in
+            link.title != String(localized: "Official Website")
+        }
+    }
+
+    private func updateBadges(for detail: IGDBGameDetail, releaseDates: [PlatformReleaseDate], links: [GameLink]) -> [GameUpdateBadge] {
+        var badges: [GameUpdateBadge] = []
+
+        let accuracy = releaseAccuracy(from: detail.releaseDates, fallbackDate: detail.firstReleaseDate)
+        if accuracy != .exact {
+            badges.append(GameUpdateBadge(
+                title: String(localized: "Release date is not final"),
+                detail: accuracy.title
+            ))
+        }
+
+        if hasPreorderAvailable(links: links, firstReleaseDate: detail.firstReleaseDate) {
+            badges.append(GameUpdateBadge(
+                title: String(localized: "Preorder available"),
+                detail: links.filter { $0.title != String(localized: "Official Website") }.map(\.title).joined(separator: ", ")
+            ))
+        }
+
+        let distinctPlatforms = Set(releaseDates.map(\.platformName))
+        if distinctPlatforms.count > 1 {
+            badges.append(GameUpdateBadge(
+                title: String(localized: "Platform dates available"),
+                detail: String(localized: "\(distinctPlatforms.count) platforms")
+            ))
+        }
+
+        return badges
     }
 
     /// Отбирает магазины и официальный сайт из ссылок IGDB (websites.type).
