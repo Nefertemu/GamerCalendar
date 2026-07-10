@@ -18,6 +18,7 @@
 		433777A630015ABC0061A183 /* GameCatalogService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 433777A530015ABC0061A183 /* GameCatalogService.swift */; };
 		433777A830015ABF0061A183 /* MonthGrouping.swift in Sources */ = {isa = PBXBuildFile; fileRef = 433777A730015ABF0061A183 /* MonthGrouping.swift */; };
 		433777AA30015D610061A183 /* DeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 433777A930015D610061A183 /* DeepLink.swift */; };
+		433777AC30016D990061A183 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 433777AB30016D990061A183 /* PrivacyInfo.xcprivacy */; };
 		4393834C2FFAE21E003ACC20 /* GameDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4393834B2FFAE21E003ACC20 /* GameDetailViewController.swift */; };
 		4393834E2FFAE2E2003ACC20 /* ScreenshotViewerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4393834D2FFAE2E2003ACC20 /* ScreenshotViewerController.swift */; };
 		43949C452FFBAE26009E11E5 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 43949C442FFBAE26009E11E5 /* Localizable.xcstrings */; };
@@ -88,6 +89,7 @@
 		433777A530015ABC0061A183 /* GameCatalogService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCatalogService.swift; sourceTree = "<group>"; };
 		433777A730015ABF0061A183 /* MonthGrouping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonthGrouping.swift; sourceTree = "<group>"; };
 		433777A930015D610061A183 /* DeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepLink.swift; sourceTree = "<group>"; };
+		433777AB30016D990061A183 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		4393834B2FFAE21E003ACC20 /* GameDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameDetailViewController.swift; sourceTree = "<group>"; };
 		4393834D2FFAE2E2003ACC20 /* ScreenshotViewerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotViewerController.swift; sourceTree = "<group>"; };
 		43949C442FFBAE26009E11E5 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
@@ -198,6 +200,7 @@
 				43949C6F2FFC4F86009E11E5 /* MonthGridViewController.swift */,
 				43949C712FFC4F8C009E11E5 /* FranchiseViewController.swift */,
 				433777A930015D610061A183 /* DeepLink.swift */,
+				433777AB30016D990061A183 /* PrivacyInfo.xcprivacy */,
 			);
 			path = "Gamer's Calendar";
 			sourceTree = "<group>";
@@ -366,6 +369,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				433777AC30016D990061A183 /* PrivacyInfo.xcprivacy in Resources */,
 				43949C472FFBAE29009E11E5 /* InfoPlist.xcstrings in Resources */,
 				2234B4B82822BF0400B8CCB0 /* LaunchScreen.storyboard in Resources */,
 				43949C452FFBAE26009E11E5 /* Localizable.xcstrings in Resources */,
