@@ -5,7 +5,7 @@ import UIKit
 /// Тап по дню открывает шторку со списком релизов этого дня.
 class MonthGridViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate {
 
-    private let gameService = IGDBService()
+    private let gameService: GameCatalogService
     private let calendar = Calendar.current
 
     /// Первое число отображаемого месяца.
@@ -32,7 +32,8 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
         return formatter
     }()
 
-    init() {
+    init(gameService: GameCatalogService = IGDBService()) {
+        self.gameService = gameService
         month = calendar.dateInterval(of: .month, for: .now)?.start ?? .now
         super.init(nibName: nil, bundle: nil)
     }
@@ -149,20 +150,74 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
 
         if let cached = monthCache[month] {
             gamesByDay = cached
+            updateCalendarState(for: cached)
             collectionView.reloadData()
             prefetchAdjacentMonths()
             return
         }
 
         gamesByDay = [:]
+        collectionView.backgroundView = nil
         collectionView.reloadData()
 
-        loadTask = Task {
-            guard let byDay = await loadMonth(month), !Task.isCancelled else { return }
+        loadTask = Task { [weak self] in
+            guard let self else { return }
+
+            guard let byDay = await loadMonth(month), !Task.isCancelled else {
+                guard !Task.isCancelled else { return }
+                showCalendarMessage(
+                    text: String(localized: "Couldn't load games"),
+                    retryTitle: String(localized: "Retry")
+                )
+                return
+            }
             gamesByDay = byDay
+            updateCalendarState(for: byDay)
             collectionView.reloadData()
             prefetchAdjacentMonths()
         }
+    }
+
+    private func updateCalendarState(for gamesByDay: [Int: [GamesStorage]]) {
+        if gamesByDay.isEmpty {
+            showCalendarMessage(text: String(localized: "No games found"))
+        } else {
+            collectionView.backgroundView = nil
+        }
+    }
+
+    private func showCalendarMessage(text: String, retryTitle: String? = nil) {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 15)
+        label.textColor = .secondaryLabel
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        label.text = text
+
+        let stack = UIStackView(arrangedSubviews: [label])
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.spacing = 12
+
+        if let retryTitle {
+            var config = UIButton.Configuration.borderedProminent()
+            config.title = retryTitle
+            stack.addArrangedSubview(UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
+                self?.reload()
+            }))
+        }
+
+        let container = UIView()
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            stack.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            stack.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor, constant: 24),
+            stack.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor, constant: -24)
+        ])
+
+        collectionView.backgroundView = container
     }
 
     /// Загружает месяц и раскладывает игры по дням.
@@ -264,9 +319,9 @@ class MonthGridViewController: UIViewController, UICollectionViewDataSource, UIC
 class DayGamesViewController: UITableViewController {
 
     private let games: [GamesStorage]
-    private let gameService: IGDBService
+    private let gameService: GameCatalogService
 
-    init(date: Date, games: [GamesStorage], gameService: IGDBService) {
+    init(date: Date, games: [GamesStorage], gameService: GameCatalogService) {
         self.games = games
         self.gameService = gameService
         super.init(style: .plain)

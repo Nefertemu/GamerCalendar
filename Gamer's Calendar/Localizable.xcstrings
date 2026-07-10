@@ -1,54 +1,12 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "%lld ratings" : {
+    "%@ — releases %@. Tracking with Gamer Calendar!" : {
       "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld rating"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld ratings"
-                }
-              }
-            }
-          }
-        },
         "ru" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld оценка"
-                }
-              },
-              "few" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld оценки"
-                }
-              },
-              "many" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld оценок"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld оценок"
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«%1$@» выходит %2$@. Слежу в Gamer Calendar!"
           }
         }
       }
@@ -76,12 +34,6 @@
         "ru" : {
           "variations" : {
             "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld месяц"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -94,10 +46,68 @@
                   "value" : "%lld месяцев"
                 }
               },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld месяц"
+                }
+              },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld месяцев"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld ratings" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld rating"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ratings"
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld оценки"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld оценок"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld оценка"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld оценок"
                 }
               }
             }
@@ -128,12 +138,6 @@
         "ru" : {
           "variations" : {
             "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld год"
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -144,6 +148,12 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld лет"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld год"
                 }
               },
               "other" : {
@@ -163,16 +173,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Об игре"
-          }
-        }
-      }
-    },
-    "%@ — releases %@. Tracking with Gamer Calendar!" : {
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "«%1$@» выходит %2$@. Слежу в Gamer Calendar!"
           }
         }
       }
@@ -247,6 +247,16 @@
         }
       }
     },
+    "Check your Lock Screen and Dynamic Island." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Смотрите на экране блокировки и в Dynamic Island."
+          }
+        }
+      }
+    },
     "Couldn't load details" : {
       "localizations" : {
         "ru" : {
@@ -267,22 +277,12 @@
         }
       }
     },
-    "Developers" : {
+    "Couldn't start countdown" : {
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Разработчики"
-          }
-        }
-      }
-    },
-    "Check your Lock Screen and Dynamic Island." : {
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Смотрите на экране блокировки и в Dynamic Island."
+            "value" : "Не удалось запустить отсчёт"
           }
         }
       }
@@ -297,12 +297,12 @@
         }
       }
     },
-    "Couldn't start countdown" : {
+    "Developers" : {
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не удалось запустить отсчёт"
+            "value" : "Разработчики"
           }
         }
       }
@@ -347,12 +347,48 @@
         }
       }
     },
+    "IGDB request failed with status %lld" : {
+      "comment" : "A description of an error that might occur when fetching data from IGDB.",
+      "isCommentAutoGenerated" : true
+    },
+    "IGDB request failed with status %lld: %@" : {
+      "comment" : "A description of an error that might occur when fetching data from IGDB. The argument is the HTTP status code, the second is the response body.",
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "IGDB request failed with status %1$lld: %2$@"
+          }
+        }
+      }
+    },
+    "Indie" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Инди"
+          }
+        }
+      }
+    },
     "Links" : {
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ссылки"
+          }
+        }
+      }
+    },
+    "Live Activities are disabled in Settings." : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live Activities выключены в настройках."
           }
         }
       }
@@ -373,16 +409,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Новая дата!"
-          }
-        }
-      }
-    },
-    "Live Activities are disabled in Settings." : {
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Live Activities выключены в настройках."
           }
         }
       }
@@ -437,16 +463,6 @@
         }
       }
     },
-    "Indie" : {
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Инди"
-          }
-        }
-      }
-    },
     "Platform" : {
       "localizations" : {
         "ru" : {
@@ -497,6 +513,16 @@
         }
       }
     },
+    "Released!" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Уже вышла!"
+          }
+        }
+      }
+    },
     "Releases %@" : {
       "localizations" : {
         "ru" : {
@@ -513,16 +539,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сегодня выходит!"
-          }
-        }
-      }
-    },
-    "Released!" : {
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Уже вышла!"
           }
         }
       }
@@ -597,6 +613,16 @@
         }
       }
     },
+    "Similar Games" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Похожие игры"
+          }
+        }
+      }
+    },
     "Simulator" : {
       "localizations" : {
         "ru" : {
@@ -613,16 +639,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Стратегии"
-          }
-        }
-      }
-    },
-    "Similar Games" : {
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Похожие игры"
           }
         }
       }
@@ -647,6 +663,10 @@
         }
       }
     },
+    "Unexpected IGDB response" : {
+      "comment" : "Error message when IGDB returns an unexpected response.",
+      "isCommentAutoGenerated" : true
+    },
     "Unknown date" : {
       "localizations" : {
         "ru" : {
@@ -663,6 +683,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Платформа неизвестна"
+          }
+        }
+      }
+    },
+    "Upcoming Games" : {
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ожидаемые игры"
           }
         }
       }
@@ -686,17 +716,7 @@
           }
         }
       }
-    },
-    "Upcoming Games" : {
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ожидаемые игры"
-          }
-        }
-      }
     }
   },
-  "version" : "1.0"
+  "version" : "1.1"
 }

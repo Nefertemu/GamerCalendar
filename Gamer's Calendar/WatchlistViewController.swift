@@ -6,10 +6,20 @@ import UIKit
 class WatchlistViewController: UITableViewController {
 
     private var games: [GamesStorage] = []
-    private let gameService = IGDBService()
+    private let gameService: GameCatalogService
 
     /// Игры, у которых при последней сверке с IGDB изменилась дата релиза.
     private var changedGameIDs: Set<Int> = []
+
+    init(gameService: GameCatalogService = IGDBService()) {
+        self.gameService = gameService
+        super.init(style: .plain)
+    }
+
+    required init?(coder: NSCoder) {
+        self.gameService = IGDBService()
+        super.init(coder: coder)
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -100,6 +110,7 @@ class WatchlistViewController: UITableViewController {
         ) { [weak self] _, _, completion in
             guard let self else { return }
             ReminderService.shared.removeReminder(for: games[indexPath.row].id)
+            changedGameIDs.remove(games[indexPath.row].id)
             games.remove(at: indexPath.row)
             tableView.deleteRows(at: [indexPath], with: .automatic)
             updateEmptyState()

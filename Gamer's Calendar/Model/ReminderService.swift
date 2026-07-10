@@ -16,15 +16,25 @@ final class ReminderService {
 
     private let defaults: UserDefaults
     private let storageKey = "trackedGames"
+    private let schedulesNotifications: Bool
+    private let reindexesSpotlight: Bool
 
     private init() {
         defaults = UserDefaults(suiteName: Self.appGroupID) ?? .standard
+        schedulesNotifications = true
+        reindexesSpotlight = true
 
         // Переносим список из старого хранилища (до появления App Group).
         if defaults.data(forKey: storageKey) == nil,
            let legacy = UserDefaults.standard.data(forKey: storageKey) {
             defaults.set(legacy, forKey: storageKey)
         }
+    }
+
+    init(defaults: UserDefaults, schedulesNotifications: Bool = true, reindexesSpotlight: Bool = true) {
+        self.defaults = defaults
+        self.schedulesNotifications = schedulesNotifications
+        self.reindexesSpotlight = reindexesSpotlight
     }
 
     /// Игры с включённым напоминанием, отсортированные по дате релиза.
@@ -42,7 +52,9 @@ final class ReminderService {
             }
             defaults.set(try? JSONEncoder().encode(sorted), forKey: storageKey)
             WidgetCenter.shared.reloadAllTimelines()
-            reindexSpotlight(sorted)
+            if reindexesSpotlight {
+                reindexSpotlight(sorted)
+            }
         }
     }
 
@@ -93,7 +105,7 @@ final class ReminderService {
 
     /// Сверяет сохранённые игры с IGDB: даты релизов часто переносят.
     /// Обновляет снимки и уведомления, возвращает id игр с изменившейся датой.
-    func refreshReleaseDates(using service: IGDBService) async -> Set<Int> {
+    func refreshReleaseDates(using service: GameCatalogService) async -> Set<Int> {
         let tracked = trackedGames
         guard !tracked.isEmpty,
               let fresh = try? await service.fetchGames(ids: tracked.map(\.id)) else {
@@ -112,8 +124,10 @@ final class ReminderService {
 
         if !changedIDs.isEmpty {
             trackedGames = updated
-            for game in updated where changedIDs.contains(game.id) {
-                await scheduleNotification(for: game)
+            if schedulesNotifications {
+                for game in updated where changedIDs.contains(game.id) {
+                    await scheduleNotification(for: game)
+                }
             }
         }
 

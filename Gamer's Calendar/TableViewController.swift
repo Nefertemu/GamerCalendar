@@ -3,14 +3,8 @@ import UIKit
 
 class TableViewController: UITableViewController {
 
-    /// Игры, сгруппированные по месяцу релиза.
-    private struct MonthSection {
-        let month: Date
-        var games: [GamesStorage]
-    }
-
     private var sections: [MonthSection] = []
-    private let gameService = IGDBService()
+    private let gameService: GameCatalogService
 
     private var currentPage = 1
     private var hasMorePages = true
@@ -65,6 +59,16 @@ class TableViewController: UITableViewController {
         formatter.setLocalizedDateFormatFromTemplate("LLLL yyyy")
         return formatter
     }()
+
+    init(style: UITableView.Style, gameService: GameCatalogService = IGDBService()) {
+        self.gameService = gameService
+        super.init(style: style)
+    }
+
+    required init?(coder: NSCoder) {
+        self.gameService = IGDBService()
+        super.init(coder: coder)
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -222,27 +226,40 @@ class TableViewController: UITableViewController {
         isLoading = true
 
         let generation = loadGeneration
+        let page = currentPage
+        let monthsAhead = monthsAhead
+        let searchQuery = searchQuery
+        let platformFilter = platformFilter
+        let genreFilter = genreFilter
+        let sortByHype = sortOrder == .hype
+        let shouldCacheFirstPage = page == 1
+            && searchQuery == nil
+            && platformFilter == nil
+            && genreFilter == nil
+            && !sortByHype
+        let gameService = gameService
 
-        Task {
+        Task { [weak self] in
             do {
                 let (fetched, hasMore) = try await gameService.fetchGames(
-                    page: currentPage,
+                    page: page,
                     monthsAhead: monthsAhead,
                     search: searchQuery,
                     platform: platformFilter,
                     genre: genreFilter,
-                    sortByHype: sortOrder == .hype
+                    sortByHype: sortByHype
                 )
 
+                guard let self else { return }
                 // Пока грузилась страница, пользователь мог сменить фильтры —
                 // тогда этот ответ уже устарел и его нельзя добавлять в список.
                 guard generation == loadGeneration else { return }
 
-                if currentPage == 1 {
+                if page == 1 {
                     // Первая страница из сети заменяет кэшированную с запуска.
                     sections = []
 
-                    if searchQuery == nil, platformFilter == nil, genreFilter == nil, sortOrder == .releaseDate {
+                    if shouldCacheFirstPage {
                         FirstPageCache.save(fetched)
                     }
                 }
@@ -254,6 +271,7 @@ class TableViewController: UITableViewController {
                 tableView.reloadData()
                 showEmptyStateIfNeeded()
             } catch {
+                guard let self else { return }
                 guard generation == loadGeneration else { return }
                 isLoading = false
                 if sections.isEmpty {
@@ -261,7 +279,7 @@ class TableViewController: UITableViewController {
                 }
             }
 
-            refreshControl?.endRefreshing()
+            self?.refreshControl?.endRefreshing()
         }
     }
 
@@ -278,18 +296,7 @@ class TableViewController: UITableViewController {
             return
         }
 
-        let calendar = Calendar.current
-        for game in games {
-            guard let date = game.releaseDate else { continue }
-
-            if let lastIndex = sections.indices.last,
-               calendar.isDate(sections[lastIndex].month, equalTo: date, toGranularity: .month) {
-                sections[lastIndex].games.append(game)
-            } else {
-                let month = calendar.dateInterval(of: .month, for: date)?.start ?? date
-                sections.append(MonthSection(month: month, games: [game]))
-            }
-        }
+        MonthGrouper.append(games, to: &sections)
     }
 
     // MARK: - Пустое состояние и ошибки

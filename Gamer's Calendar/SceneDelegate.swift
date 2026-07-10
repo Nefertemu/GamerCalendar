@@ -6,13 +6,12 @@
 //
 
 import UIKit
-import CoreSpotlight
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate, UITabBarControllerDelegate {
 
     var window: UIWindow?
 
-    private let gameService = IGDBService()
+    private let gameService: GameCatalogService = IGDBService()
 
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
@@ -72,16 +71,13 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate, UITabBarControllerDeleg
     }
 
     func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
-        guard userActivity.activityType == CSSearchableItemActionType,
-              let identifier = userActivity.userInfo?[CSSearchableItemActivityIdentifier] as? String,
-              let gameID = Int(identifier.dropFirst("game-".count)) else { return }
+        guard let gameID = GameDeepLink.gameID(from: userActivity) else { return }
         openGame(id: gameID)
     }
 
     /// Разбирает ссылки вида gamercalendar://game/123.
     private func handle(_ url: URL) {
-        guard url.scheme == "gamercalendar", url.host == "game",
-              let gameID = Int(url.lastPathComponent) else { return }
+        guard let gameID = GameDeepLink.gameID(from: url) else { return }
         openGame(id: gameID)
     }
 
@@ -142,4 +138,3 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate, UITabBarControllerDeleg
 
 
 }
-

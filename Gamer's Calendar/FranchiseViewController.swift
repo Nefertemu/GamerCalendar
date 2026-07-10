@@ -5,11 +5,11 @@ import UIKit
 class FranchiseViewController: UITableViewController {
 
     private let franchise: GameFranchise
-    private let gameService: IGDBService
+    private let gameService: GameCatalogService
     private var games: [GamesStorage] = []
     private let spinner = UIActivityIndicatorView(style: .medium)
 
-    init(franchise: GameFranchise, gameService: IGDBService) {
+    init(franchise: GameFranchise, gameService: GameCatalogService) {
         self.franchise = franchise
         self.gameService = gameService
         super.init(style: .plain)
@@ -33,8 +33,13 @@ class FranchiseViewController: UITableViewController {
     }
 
     private func load() {
-        Task {
-            games = (try? await gameService.fetchFranchiseGames(franchiseID: franchise.id)) ?? []
+        let franchiseID = franchise.id
+        let gameService = gameService
+
+        Task { [weak self] in
+            let games = (try? await gameService.fetchFranchiseGames(franchiseID: franchiseID)) ?? []
+            guard let self else { return }
+            self.games = games
             spinner.stopAnimating()
             tableView.backgroundView = nil
             tableView.reloadData()

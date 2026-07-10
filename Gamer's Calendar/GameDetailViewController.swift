@@ -7,7 +7,7 @@ import SafariServices
 class GameDetailViewController: UIViewController {
 
     private let game: GamesStorage
-    private let gameService: IGDBService
+    private let gameService: GameCatalogService
 
     private let contentStack = UIStackView()
     private let coverImageView = UIImageView()
@@ -16,7 +16,7 @@ class GameDetailViewController: UIViewController {
     private var similarGames: [GamesStorage] = []
     private var pageURL: URL?
 
-    init(game: GamesStorage, gameService: IGDBService) {
+    init(game: GamesStorage, gameService: GameCatalogService) {
         self.game = game
         self.gameService = gameService
         super.init(nibName: nil, bundle: nil)
@@ -183,12 +183,17 @@ class GameDetailViewController: UIViewController {
     // MARK: - Детали из API
 
     private func loadDetails() {
-        Task {
+        let gameID = game.id
+        let gameService = gameService
+
+        Task { [weak self] in
             do {
-                let details = try await gameService.fetchGameDetails(id: game.id)
+                let details = try await gameService.fetchGameDetails(id: gameID)
+                guard let self else { return }
                 spinner.removeFromSuperview()
                 showDetails(details)
             } catch {
+                guard let self else { return }
                 spinner.removeFromSuperview()
                 showError()
                 print("RAWG details loading error:", error)
@@ -516,9 +521,9 @@ class GameDetailViewController: UIViewController {
 
     /// Постер с выбором лучшего арта и запасными вариантами.
     private func loadPoster(for game: GamesStorage, into imageView: UIImageView) {
-        Task {
+        Task { [weak imageView] in
             guard let image = await ImageCache.shared.loadPoster(for: game) else { return }
-            imageView.image = image
+            imageView?.image = image
         }
     }
 
@@ -530,9 +535,9 @@ class GameDetailViewController: UIViewController {
             return
         }
 
-        Task {
+        Task { [weak imageView] in
             guard let image = await ImageCache.shared.loadImage(from: url) else { return }
-            imageView.image = image
+            imageView?.image = image
         }
     }
 

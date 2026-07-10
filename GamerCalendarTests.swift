@@ -1,6 +1,7 @@
 
 import Testing
 import Foundation
+import CoreSpotlight
 @testable import Gamer_s_Calendar
 
 /// Тесты маппинга ответов IGDB в модели приложения.
@@ -80,6 +81,156 @@ struct IGDBMappingTests {
         #expect(links.count == 2)
         #expect(links.first?.title == "Steam")
         #expect(links.last?.url.absoluteString == "https://example.com")
+    }
+
+}
+
+/// Тесты группировки игр по месяцам для ленты релизов.
+struct MonthGrouperTests {
+
+    @Test("Игры добавляются в секции по месяцам, записи без даты пропускаются")
+    func appendsGamesByMonth() {
+        var sections: [MonthSection] = []
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+
+        let julyFirst = Date(timeIntervalSince1970: 1_751_846_400)
+        let julySecond = Date(timeIntervalSince1970: 1_751_932_800)
+        let augustFirst = Date(timeIntervalSince1970: 1_754_524_800)
+
+        MonthGrouper.append([
+            makeGame(id: 1, releaseDate: julyFirst),
+            makeGame(id: 2, releaseDate: nil),
+            makeGame(id: 3, releaseDate: julySecond),
+            makeGame(id: 4, releaseDate: augustFirst)
+        ], to: &sections, calendar: calendar)
+
+        #expect(sections.count == 2)
+        #expect(sections[0].games.map(\.id) == [1, 3])
+        #expect(sections[1].games.map(\.id) == [4])
+    }
+
+    private func makeGame(id: Int, releaseDate: Date?) -> GamesStorage {
+        GamesStorage(
+            id: id,
+            gameTitle: "Game \(id)",
+            imageURL: nil,
+            releaseDate: releaseDate,
+            platforms: "",
+            platformBadges: [],
+            hypes: nil,
+            imageCandidates: nil,
+            coverURL: nil,
+            artworkURLs: nil
+        )
+    }
+
+}
+
+/// Тесты обновления сохранённых напоминаний без реальных уведомлений и Spotlight.
+struct ReminderServiceTests {
+
+    @Test("При переносе релиза сервис обновляет сохранённую игру и возвращает её id")
+    func refreshReleaseDatesUpdatesChangedGames() async throws {
+        let defaults = try #require(UserDefaults(suiteName: "ReminderServiceTests.\(UUID().uuidString)"))
+        let oldDate = Date(timeIntervalSince1970: 1_751_846_400)
+        let newDate = Date(timeIntervalSince1970: 1_754_524_800)
+        let oldGame = makeGame(id: 7, title: "Moved Game", releaseDate: oldDate)
+        let freshGame = makeGame(id: 7, title: "Moved Game", releaseDate: newDate)
+
+        defaults.set(try JSONEncoder().encode([oldGame]), forKey: "trackedGames")
+
+        let reminderService = ReminderService(
+            defaults: defaults,
+            schedulesNotifications: false,
+            reindexesSpotlight: false
+        )
+        let changedIDs = await reminderService.refreshReleaseDates(using: MockGameCatalogService(gamesByID: [7: freshGame]))
+
+        #expect(changedIDs == [7])
+        #expect(reminderService.trackedGames.map(\.releaseDate) == [newDate])
+    }
+
+    private func makeGame(id: Int, title: String, releaseDate: Date?) -> GamesStorage {
+        GamesStorage(
+            id: id,
+            gameTitle: title,
+            imageURL: nil,
+            releaseDate: releaseDate,
+            platforms: "",
+            platformBadges: [],
+            hypes: nil,
+            imageCandidates: nil,
+            coverURL: nil,
+            artworkURLs: nil
+        )
+    }
+
+}
+
+/// Тесты чистого парсинга ссылок из виджета и Spotlight.
+struct GameDeepLinkTests {
+
+    @Test("URL виджета содержит id игры")
+    func parsesWidgetGameURL() throws {
+        let url = try #require(URL(string: "gamercalendar://game/42"))
+
+        #expect(GameDeepLink.gameID(from: url) == 42)
+    }
+
+    @Test("Некорректные URL игнорируются")
+    func rejectsInvalidURLs() throws {
+        let wrongHost = try #require(URL(string: "gamercalendar://profile/42"))
+        let wrongScheme = try #require(URL(string: "https://game/42"))
+
+        #expect(GameDeepLink.gameID(from: wrongHost) == nil)
+        #expect(GameDeepLink.gameID(from: wrongScheme) == nil)
+    }
+
+    @Test("Spotlight activity содержит id игры")
+    func parsesSpotlightActivity() {
+        let activity = NSUserActivity(activityType: CSSearchableItemActionType)
+        activity.userInfo = [CSSearchableItemActivityIdentifier: "game-99"]
+
+        #expect(GameDeepLink.gameID(from: activity) == 99)
+    }
+
+}
+
+private struct MockGameCatalogService: GameCatalogService {
+
+    var gamesByID: [Int: GamesStorage] = [:]
+
+    func fetchGames(page: Int, monthsAhead: Int, search: String?, platform: PlatformFamily?, genre: GenreFilter?, sortByHype: Bool) async throws -> (games: [GamesStorage], hasMore: Bool) {
+        ([], false)
+    }
+
+    func fetchGames(ids: [Int]) async throws -> [GamesStorage] {
+        ids.compactMap { gamesByID[$0] }
+    }
+
+    func fetchGames(from startDate: Date, to endDate: Date) async throws -> [GamesStorage] {
+        []
+    }
+
+    func fetchFranchiseGames(franchiseID: Int) async throws -> [GamesStorage] {
+        []
+    }
+
+    func fetchGameDetails(id: Int) async throws -> GameDetails {
+        GameDetails(
+            about: "",
+            genres: "",
+            developers: "",
+            screenshots: [],
+            rating: 0,
+            ratingsCount: 0,
+            trailerURL: nil,
+            links: [],
+            similarGames: [],
+            franchise: nil,
+            pageURL: nil
+        )
     }
 
 }

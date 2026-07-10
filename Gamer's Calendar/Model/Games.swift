@@ -382,7 +382,24 @@ struct TwitchToken: Decodable {
 
 // MARK: - Сервис IGDB
 
-final class IGDBService {
+enum IGDBServiceError: LocalizedError {
+    case invalidResponse
+    case requestFailed(statusCode: Int, body: String)
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidResponse:
+            return String(localized: "Unexpected IGDB response")
+        case let .requestFailed(statusCode, body):
+            guard !body.isEmpty else {
+                return String(localized: "IGDB request failed with status \(statusCode)")
+            }
+            return String(localized: "IGDB request failed with status \(statusCode): \(body)")
+        }
+    }
+}
+
+final class IGDBService: GameCatalogService {
 
     /// Максимум записей на страницу (IGDB разрешает до 500).
     static let pageSize = 40
@@ -585,7 +602,8 @@ final class IGDBService {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.httpBody = query.data(using: .utf8)
 
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validate(response: response, data: data)
         return data
     }
 
@@ -604,7 +622,8 @@ final class IGDBService {
         var request = URLRequest(url: components.url!)
         request.httpMethod = "POST"
 
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validate(response: response, data: data)
         let token = try decoder.decode(TwitchToken.self, from: data)
 
         accessToken = token.accessToken
@@ -640,6 +659,18 @@ final class IGDBService {
     private func imageURL(_ image: IGDBImage?, size: String) -> URL? {
         guard let image else { return nil }
         return URL(string: "https://images.igdb.com/igdb/image/upload/\(size)/\(image.imageId).jpg")
+    }
+
+    private func validate(response: URLResponse, data: Data) throws {
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw IGDBServiceError.invalidResponse
+        }
+
+        guard (200..<300).contains(httpResponse.statusCode) else {
+            let body = String(data: data, encoding: .utf8)?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            throw IGDBServiceError.requestFailed(statusCode: httpResponse.statusCode, body: body)
+        }
     }
 
 }
