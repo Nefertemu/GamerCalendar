@@ -1,4 +1,3 @@
-
 import Testing
 import Foundation
 import CoreSpotlight

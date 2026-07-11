@@ -1,64 +1,135 @@
 # Gamer Calendar
 
-iOS app that tracks upcoming video game releases. Browse what's coming out in a feed or on a real calendar grid, follow the games you care about, and get notified on release day — with a home screen widget and a Dynamic Island countdown.
+Gamer Calendar is an iOS release tracker for video games. It combines an upcoming-games feed, a real calendar grid, a watchlist, release reminders, widgets, Live Activities, and richer IGDB metadata such as platform-specific release dates.
 
-Built with **UIKit**, **SwiftUI (widget)**, **Swift Concurrency (async/await)**, and the **[IGDB API](https://api-docs.igdb.com/)** (via Twitch OAuth).
+Built with **UIKit**, **WidgetKit / SwiftUI**, **ActivityKit**, **Swift Concurrency**, and the **[IGDB API](https://api-docs.igdb.com/)** through Twitch OAuth.
+
+## Highlights
+
+- Upcoming game feed with search, filters, sorting, pagination, and month grouping.
+- Calendar grid with release posters, day sheets, swipe navigation, Today shortcut, loading/error states, and month transition animation.
+- Watchlist with release countdowns, release-date refresh, local notifications, weekly digest, Spotlight indexing, and swipe-to-remove.
+- Game details with trailer, screenshots, rating, description, genres, developers, store links, franchise navigation, similar games, and IGDB page link.
+- Release intelligence: platform-specific release dates, release-date accuracy, preorder availability, and update badges.
+- Home screen widget and Live Activity / Dynamic Island countdown for tracked releases.
+- Offline-first catalog cache and disk-backed image cache.
+- English and Russian localization via String Catalogs.
 
 ## Features
 
-### Browsing
-- 📅 **Release feed** — upcoming games grouped by month with infinite scrolling, pull-to-refresh, detailed error states, and a navigation title that follows the month you're scrolling through.
-- 🗓 **Calendar grid** — a real month view with game posters on release days, loading/error/empty states, swipe navigation, and a Today shortcut. Tap a day to see its releases in a sheet. Months switch instantly: adjacent months and their posters are prefetched in the background.
-- 🔍 **Search** — debounced search across upcoming releases.
-- 🎛 **Filters & sorting** — platform family (PC / PlayStation / Xbox / Nintendo), date window from 3 months to 5 years, sort by release date or by hype. Selected filters persist across launches.
+### Browse Releases
 
-### Tracking
-- 🔔 **Watchlist** — track games with one tap on the bell. Release-day notification with the game poster, countdown in the list, swipe to remove.
-- 📆 **Live dates** — tracked games are re-checked against IGDB: when a release date shifts, the app updates the snapshot, reschedules the notification, and highlights the change.
-- 🗞 **Weekly digest** — a Monday-morning notification listing your tracked games releasing that week.
-- 📱 **Home screen widget** — next tracked releases with a live countdown (small and medium sizes), fed from an App Group shared with the app.
-- ⏱ **Live Activity** — countdown to a release on the Lock Screen and in the Dynamic Island.
+- **Feed**: upcoming games grouped by month, with infinite scroll and pull-to-refresh.
+- **Search**: debounced search across upcoming releases.
+- **Filters**: platform family, genre, date window, and hype/date sorting.
+- **Calendar**: month grid with posters on release days; tap a day to see every release in a sheet.
+- **Fast reloads**: loaded months and catalog responses are cached, so returning to already visited data is quick.
 
-### Game page
-- 🎬 Trailer (YouTube), rating, description, genres, developers.
-- 🖼 Stretchy parallax cover and a zoomable full-screen screenshot viewer.
-- 🛒 Store links: Steam / PS Store / Xbox / Nintendo eShop / Epic / GOG / official site.
-- 🧩 Franchise page (all games of the series) and a similar-games strip with drill-down navigation.
+### Track Games
 
-### Under the hood
-- 🖼 **Smart poster picking** — IGDB artworks include blank and placeholder files, so the app compares artwork thumbnail sizes and picks the most detailed poster; portrait covers are used in the calendar grid, landscape artworks in lists.
-- ⚡️ **Fast launch** — the first page is cached on disk and shown instantly while fresh data loads; images use a disk-backed cache.
-- 🌍 **Localization** — English and Russian via String Catalogs, including proper plural forms.
-- ✅ **Unit tests** for the IGDB response mapping (Swift Testing).
+- **Watchlist**: tap the bell on a game page to track it.
+- **Reminder presets**: release day, 1 day before, and 7 days before.
+- **Weekly digest**: Monday notification with tracked games releasing that week.
+- **Date-change handling**: tracked games are refreshed against IGDB; if a release date moves, the app updates the snapshot and reschedules notifications.
+- **Update badges**: watchlist rows can surface useful status such as preorder availability or non-final release dates.
+
+### Game Details
+
+- **Media**: trailer, screenshots, zoomable screenshot viewer, and stretchy header image.
+- **Metadata**: description, genres, developers, rating, platforms, similar games, and franchise page.
+- **Links**: Steam, PlayStation Store, Xbox Store, Nintendo eShop, Epic Games, GOG, official site, and IGDB page where available.
+- **Release Status**: shows whether the date is exact, month-only, year-only, quarter-based, TBA, or unknown.
+- **Platform Release Dates**: groups equal dates together, for example:
+
+```text
+Feb 18, 2027 · Advanced Access: PC, PlayStation 5, Xbox Series X|S
+Feb 23, 2027 · Full Release: PC, PlayStation 5, Xbox Series X|S
+```
+
+### Widgets and Live Activities
+
+- **Home screen widget**: small and medium widgets for upcoming tracked games.
+- **Deep links**: widgets and Spotlight results open directly into the game page.
+- **Live Activity**: Lock Screen and Dynamic Island countdown. The compact island uses short countdown text such as `4mo` instead of a long hour timer.
+
+### Offline and Data Quality
+
+- **Offline catalog cache**: feed pages, calendar months, details, franchise lists, and ID lookups fall back to cached JSON when the network fails.
+- **Image cache**: disk-backed image loading reduces repeated downloads.
+- **Smart poster selection**: IGDB can return blank or low-value artwork; the app compares thumbnail content and falls back through artwork, screenshots, and covers.
+- **Landscape/portrait handling**: list cells prefer landscape art; calendar cells use portrait covers.
 
 ## Setup
 
-1. Clone the repo and open `Gamer's Calendar.xcodeproj`.
-2. Create a Twitch application at [dev.twitch.tv/console](https://dev.twitch.tv/console) (IGDB uses Twitch OAuth) and copy its Client ID and Client Secret.
-3. Copy `Gamer's Calendar/Secrets.example.swift` to `Gamer's Calendar/Secrets.swift` and fill in the Twitch Client ID and Client Secret. `Secrets.swift` is gitignored; do not commit real credentials.
+1. Clone the repo.
+2. Open `Gamer's Calendar.xcodeproj` in Xcode.
+3. Create a Twitch application at [dev.twitch.tv/console](https://dev.twitch.tv/console). IGDB uses Twitch OAuth.
+4. Copy:
 
-4. Build and run.
+```sh
+cp "Gamer's Calendar/Secrets.example.swift" "Gamer's Calendar/Secrets.swift"
+```
+
+5. Fill `Secrets.swift` with your Twitch Client ID and Client Secret.
+6. Build and run.
+
+`Secrets.swift` is ignored by git. Do not commit real credentials.
 
 ## Architecture
 
-- `Model/Games.swift` — domain models (`GamesStorage`, `GameDetails`), the `IGDBService` network layer (token refresh, Apicalypse query building, response mapping), image cache with artwork quality selection, first-page cache.
-- `Model/ReminderService.swift` — watchlist storage (App Group `UserDefaults`, shared with the widget), release notifications, weekly digest.
-- `Model/ReleaseCountdown.swift` — Live Activity attributes and start logic.
-- `TableViewController` — release feed: month sections, search, filters, pagination, detailed error/empty states.
-- `MonthGridViewController` — calendar grid with month cache and adjacent-month prefetch.
-- `WatchlistViewController` — tracked games with countdowns and date-change refresh.
-- `GameDetailViewController` — game page assembled from stack views.
-- `FranchiseViewController` — games of a franchise.
-- `GamerCalendarWidget/` — WidgetKit extension: home screen widget and Live Activity UI.
+- `Model/Games.swift`: domain models, release-date accuracy models, filters, and first-page cache.
+- `Model/IGDBService.swift`: IGDB response models, Apicalypse query building, Twitch token refresh, response mapping, store-link filtering, and release-date intelligence.
+- `Model/ImageCache.swift`: disk-backed image loading, poster candidate fallback, placeholder rejection, and artwork quality selection.
+- `Model/GameCatalogService.swift`: catalog abstraction used by screens and tests.
+- `Model/CachedGameCatalogService.swift`: offline-first wrapper around IGDB.
+- `Model/ReminderService.swift`: watchlist storage, App Group sync, notifications, weekly digest, and Spotlight indexing.
+- `Model/ReleaseCountdown.swift`: Live Activity attributes and start logic.
+- `TableViewController.swift`: release feed, search, filters, sorting, pagination, and empty/error states.
+- `MonthGridViewController.swift`: calendar grid, month cache, day release sheet, and animated month transitions.
+- `WatchlistViewController.swift`: tracked releases, countdowns, refresh of moved dates, and update badges.
+- `GameDetailViewController.swift`: game page assembled with UIKit stack views.
+- `FranchiseViewController.swift`: games from the same franchise.
+- `GamerCalendarWidget/`: WidgetKit extension and Live Activity UI.
 
-## API notes
+## API Notes
 
-The app talks to IGDB v4 (`/games` endpoint with the Apicalypse query language). The Twitch OAuth token is requested lazily and refreshed automatically before expiry. Search uses a `name ~ *"…"*` filter instead of IGDB's `search` so results stay sorted by release date. The image CDN doesn't expose file sizes, so artwork quality is compared via thumbnail downloads.
+The app uses IGDB v4 with Apicalypse queries.
+
+- `games` is used for feed pages, calendar months, watchlist refreshes, franchise pages, and details.
+- `release_dates` is used to show platform-specific dates and release accuracy.
+- `websites` is used for store links and preorder availability signals.
+- `videos`, `screenshots`, `similar_games`, `franchises`, `genres`, and `involved_companies` power the detail screen.
+
+Search uses `name ~ *"..."*` instead of IGDB's `search` operator so feed sorting stays predictable.
+
+## App Store Notes
+
+- The app includes privacy manifests for the main app and widget extension.
+- `ITSAppUsesNonExemptEncryption` is set to `false`.
+- App Group is used for watchlist sharing between the app and widget.
+- The App Store privacy labels should match the actual shipped behavior. If analytics, external price APIs, or tracking are added later, update privacy labels and `PrivacyInfo.xcprivacy`.
+- Third-party game artwork and metadata come from IGDB; App Store metadata should include appropriate attribution and usage notes where required.
+
+## Tests
+
+The project includes Swift Testing coverage for:
+
+- IGDB game mapping.
+- Platform badge mapping.
+- Store link filtering.
+- Month grouping.
+- Reminder date refresh behavior.
+- Deep link parsing.
+
+Run tests from Xcode. CLI simulator tests may require a matching installed simulator runtime/destination.
 
 ## Roadmap
 
-- [ ] Interactive widget controls
-- [ ] Universal links for shared games
-- [ ] iPad layout (split view) and Mac Catalyst
-- [ ] UI tests for feed, calendar, watchlist, and deep links
-- [ ] Screenshots in this README
+- [ ] PC price tracking through IsThereAnyDeal or CheapShark.
+- [ ] Price-drop alerts for watchlisted games.
+- [ ] Better release history: show moved-from / moved-to dates.
+- [ ] Event calendar for showcases such as Nintendo Direct, State of Play, Gamescom, and The Game Awards.
+- [ ] More widget variants: this-week releases, watchlist calendar, and price drops.
+- [ ] iPad layout with split view.
+- [ ] UI tests for feed, calendar, watchlist, deep links, and settings.
+- [ ] README screenshots and App Store-style preview images.

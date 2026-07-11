@@ -22,6 +22,8 @@
 		433777B0300171FA0061A183 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 433777AF300171FA0061A183 /* AppSettings.swift */; };
 		433777B2300172200061A183 /* CachedGameCatalogService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 433777B1300172200061A183 /* CachedGameCatalogService.swift */; };
 		433777B6300174F90061A183 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 433777B5300174F90061A183 /* SettingsViewController.swift */; };
+		433777B83001AB5F0061A183 /* ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 433777B73001AB5F0061A183 /* ImageCache.swift */; };
+		433777BA3001ABC20061A183 /* IGDBService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 433777B93001ABC20061A183 /* IGDBService.swift */; };
 		4393834C2FFAE21E003ACC20 /* GameDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4393834B2FFAE21E003ACC20 /* GameDetailViewController.swift */; };
 		4393834E2FFAE2E2003ACC20 /* ScreenshotViewerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4393834D2FFAE2E2003ACC20 /* ScreenshotViewerController.swift */; };
 		43949C452FFBAE26009E11E5 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 43949C442FFBAE26009E11E5 /* Localizable.xcstrings */; };
@@ -96,6 +98,8 @@
 		433777AF300171FA0061A183 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		433777B1300172200061A183 /* CachedGameCatalogService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedGameCatalogService.swift; sourceTree = "<group>"; };
 		433777B5300174F90061A183 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
+		433777B73001AB5F0061A183 /* ImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCache.swift; sourceTree = "<group>"; };
+		433777B93001ABC20061A183 /* IGDBService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IGDBService.swift; sourceTree = "<group>"; };
 		4393834B2FFAE21E003ACC20 /* GameDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameDetailViewController.swift; sourceTree = "<group>"; };
 		4393834D2FFAE2E2003ACC20 /* ScreenshotViewerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotViewerController.swift; sourceTree = "<group>"; };
 		43949C442FFBAE26009E11E5 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
@@ -222,6 +226,8 @@
 				433777A730015ABF0061A183 /* MonthGrouping.swift */,
 				433777AF300171FA0061A183 /* AppSettings.swift */,
 				433777B1300172200061A183 /* CachedGameCatalogService.swift */,
+				433777B73001AB5F0061A183 /* ImageCache.swift */,
+				433777B93001ABC20061A183 /* IGDBService.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -425,10 +431,12 @@
 				4393834E2FFAE2E2003ACC20 /* ScreenshotViewerController.swift in Sources */,
 				43949C4D2FFC34BE009E11E5 /* WatchlistViewController.swift in Sources */,
 				433777A630015ABC0061A183 /* GameCatalogService.swift in Sources */,
+				433777B83001AB5F0061A183 /* ImageCache.swift in Sources */,
 				433777B2300172200061A183 /* CachedGameCatalogService.swift in Sources */,
 				433777A830015ABF0061A183 /* MonthGrouping.swift in Sources */,
 				43949C742FFC4F99009E11E5 /* ReleaseCountdown.swift in Sources */,
 				2234B4AE2822BF0100B8CCB0 /* SceneDelegate.swift in Sources */,
+				433777BA3001ABC20061A183 /* IGDBService.swift in Sources */,
 				43949C702FFC4F86009E11E5 /* MonthGridViewController.swift in Sources */,
 				2234B4DF2822C46900B8CCB0 /* Games.swift in Sources */,
 				43949C722FFC4F8C009E11E5 /* FranchiseViewController.swift in Sources */,

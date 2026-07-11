@@ -210,6 +210,12 @@ final class ReminderService {
     /// отслеживаемых игр, выходящих на той неделе. Вызывается при каждом
     /// запуске — содержимое пересчитывается заново.
     func scheduleWeeklyDigest() {
+        // Защита на уровне сервиса: настройка главнее любого вызова.
+        guard AppSettings.weeklyDigestEnabled else {
+            cancelWeeklyDigest()
+            return
+        }
+
         let digestID = "weekly-digest"
         let center = UNUserNotificationCenter.current()
         center.removePendingNotificationRequests(withIdentifiers: [digestID])

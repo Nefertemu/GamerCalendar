@@ -205,7 +205,7 @@ class GameDetailViewController: UIViewController {
             } catch {
                 guard let self else { return }
                 showError(error)
-                print("RAWG details loading error:", error)
+                print("IGDB details loading error:", error)
             }
         }
     }
